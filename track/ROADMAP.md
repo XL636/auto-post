@@ -3,12 +3,13 @@
 ## v1.0 — Core (当前)
 - [x] 设计文档完成
 - [x] 实现计划完成
-- [ ] Tier-1 平台：LinkedIn, Facebook, Discord, Reddit
-- [ ] 发帖：即时 + 定时（BullMQ）
-- [ ] 草稿管理
-- [ ] 内容日历（月/周视图）
-- [ ] 数据分析仪表盘
-- [ ] 本地 Docker 部署
+- [x] Tier-1 平台代码：LinkedIn, Facebook, Discord, Reddit
+- [x] 发帖：即时 + 定时（BullMQ）
+- [x] 草稿管理
+- [x] 内容日历（月/周视图）
+- [x] 数据分析仪表盘
+- [x] Notion 风格 UI（6 页面）
+- [ ] 连接真实数据库 E2E 验证
 
 ## v1.1 — Tier-2 平台 + AI
 - [ ] Twitter/X 集成（需 Basic Plan $100/月）
