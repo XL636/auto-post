@@ -10,8 +10,16 @@
 ### 约束
 - 本地 Docker 部署，零服务费
 - 单用户模式（预留多用户扩展，数据模型含 userId）
-- 8 个社交平台全覆盖
+- 8 个社交平台（分 Tier 实现）
 - Notion 风格 UI
+
+### 平台分级
+
+| Tier | 平台 | 理由 |
+|------|------|------|
+| **Tier-1（v1.0 核心）** | LinkedIn, Facebook, Discord, Reddit | OAuth 标准、API 稳定、无付费门槛 |
+| **Tier-2（v1.1 扩展）** | Twitter/X, YouTube | Twitter 需 Basic Plan ($100/月)，YouTube 需 API 配额申请 |
+| **Tier-3（v1.2 实验）** | Instagram, TikTok | Instagram 仅支持 Business 账号 + 异步两步发布；TikTok 未审核 App 内容强制私有 |
 
 ### 不做
 - AI 辅助写作（第一版不含）
@@ -199,6 +207,8 @@ model Account {
   displayName    String
   avatarUrl      String?
   tokenExpiresAt DateTime?
+  tokenType      String?   // short-lived / long-lived
+  scopes         String[]  // 实际授权的 OAuth scope
   posts          PostPlatform[]
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -229,12 +239,15 @@ model PostPlatform {
   post           Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
   account        Account    @relation(fields: [accountId], references: [id])
   platformPostId String?
-  status         PostStatus @default(DRAFT)
-  errorMessage   String?
-  publishedAt    DateTime?
-  analytics      Analytics[]
+  status          PostStatus @default(DRAFT)
+  overrideContent String?    // 各平台差异化内容覆盖
+  errorMessage    String?
+  publishedAt     DateTime?
+  analytics       Analytics[]
 
   @@unique([postId, accountId])
+  @@index([status])
+  @@index([accountId, status])
 }
 
 model Analytics {
@@ -258,7 +271,9 @@ model Analytics {
 - **每平台独立状态**：Twitter 成功 / LinkedIn 失败，互不影响
 - **Analytics 时序数据**：同一帖子多次拉取，可看趋势变化
 - **userId 预留**：所有表含 userId，默认 "default"，加多用户只需加认证层
-- **Token 加密**：accessToken 用 AES-256-GCM 加密存储
+- **Token 加密**：accessToken 用 AES-256-GCM 加密存储，每次加密生成随机 12-byte nonce，nonce + ciphertext 拼接存储
+- **平台差异化内容**：PostPlatform.overrideContent 允许各平台发布不同内容
+- **OAuth scope 追踪**：Account.scopes 存储实际授权范围，发帖前 pre-flight 校验
 
 ---
 
@@ -274,8 +289,9 @@ export interface PlatformClient {
   handleCallback(code: string): Promise<TokenPair>
   refreshToken(token: string): Promise<TokenPair>
 
-  // 发帖
+  // 发帖（支持同步和异步两步发布，如 Instagram）
   publish(content: string, mediaUrls?: string[]): Promise<PublishResult>
+  pollPublishStatus?(jobId: string): Promise<PublishResult>  // Instagram 等异步平台
   delete(platformPostId: string): Promise<void>
 
   // 数据
@@ -456,9 +472,15 @@ services:
     build: .
     ports:
       - "3000:3000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/autopost
-      - REDIS_URL=redis://redis:6379
+    env_file: .env
+    depends_on:
+      - postgres
+      - redis
+
+  worker:
+    build: .
+    command: node dist/worker.js
+    env_file: .env
     depends_on:
       - postgres
       - redis
@@ -485,16 +507,16 @@ volumes:
 
 ## 11. 各平台 API 限制
 
-| 平台 | 文字限制 | 媒体 | 频率限制 | OAuth |
-|------|---------|------|---------|-------|
-| Twitter/X | 280 字符 | 图片 4 张/视频 1 个 | 300 帖/3h | OAuth 1.0a |
-| LinkedIn | 3000 字符 | 图片 20 张/视频 1 个 | 100 帖/天 | OAuth 2.0 |
-| Instagram | 2200 字符 | 图片/视频必须有 | 25 帖/天 | OAuth 2.0 (Meta) |
-| Facebook | 63206 字符 | 图片/视频 | 50 帖/天 | OAuth 2.0 (Meta) |
-| TikTok | 2200 字符 | 仅视频 | API 限制 | OAuth 2.0 |
-| Discord | 2000 字符 | 图片/视频 | Bot Token | Bot Token |
-| Reddit | 40000 字符 | 图片/视频 | 60 请求/min | OAuth 2.0 |
-| YouTube | 5000 字描述 | 仅视频 | API 配额 | OAuth 2.0 (Google) |
+| 平台 | Tier | 文字限制 | 媒体 | 频率限制 | OAuth | 备注 |
+|------|------|---------|------|---------|-------|------|
+| LinkedIn | T1 | 3000 字符 | 图片 20 张/视频 1 个 | 100 帖/天 | OAuth 2.0 | 稳定 |
+| Facebook | T1 | 63206 字符 | 图片/视频 | 50 帖/天 | OAuth 2.0 (Meta) | 稳定 |
+| Discord | T1 | 2000 字符 | 图片/视频 | 无限制 | Bot Token | 最简单 |
+| Reddit | T1 | 40000 字符 | 图片/视频 | 60 请求/min | OAuth 2.0 | 稳定 |
+| Twitter/X | T2 | 280 字符 | 图片 4 张/视频 1 个 | 1500 帖/月(Free) | OAuth 2.0 PKCE | 需 Basic Plan($100/月)才实用 |
+| YouTube | T2 | 5000 字描述 | 仅视频 | API 配额制 | OAuth 2.0 (Google) | 需申请 API 配额 |
+| Instagram | T3 | 2200 字符 | 图片/视频必须有 | 25 帖/天 | OAuth 2.0 (Meta) | 仅 Business 账号，异步两步发布 |
+| TikTok | T3 | 2200 字符 | 图片/视频 | API 限制 | OAuth 2.0 | 未审核 App 内容强制私有 |
 
 ---
 
@@ -502,9 +524,9 @@ volumes:
 
 | 阶段 | 功能 |
 |------|------|
-| v1.0 | 当前设计全部功能 |
-| v1.1 | AI 辅助写作（接入 Claude API） |
-| v1.2 | 多用户 + 认证系统 |
+| v1.0 | Tier-1 平台（LinkedIn, Facebook, Discord, Reddit）+ 全部 UI 功能 |
+| v1.1 | Tier-2 平台（Twitter/X, YouTube）+ AI 辅助写作 |
+| v1.2 | Tier-3 平台（Instagram, TikTok）+ 多用户 + 认证系统 |
 | v2.0 | 前后端分离（迁移到方案 B） |
 | v2.1 | 团队协作、角色权限 |
 | v2.2 | MCP Server 接口 |
