@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Platform {
+  TWITTER
+  LINKEDIN
+  INSTAGRAM
+  FACEBOOK
+  TIKTOK
+  DISCORD
+  REDDIT
+  YOUTUBE
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+}
+
+model Account {
+  id             String         @id @default(cuid())
+  userId         String         @default("default")
+  platform       Platform
+  accessToken    String
+  refreshToken   String?
+  platformUserId String
+  displayName    String
+  avatarUrl      String?
+  tokenExpiresAt DateTime?
+  tokenType      String?
+  scopes         String[]
+  posts          PostPlatform[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([userId, platform, platformUserId])
+}
+
+model Post {
+  id          String         @id @default(cuid())
+  userId      String         @default("default")
+  content     String
+  mediaUrls   String[]
+  status      PostStatus     @default(DRAFT)
+  scheduledAt DateTime?
+  publishedAt DateTime?
+  platforms   PostPlatform[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([userId, status])
+  @@index([scheduledAt])
+}
+
+model PostPlatform {
+  id              String     @id @default(cuid())
+  postId          String
+  accountId       String
+  post            Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  account         Account    @relation(fields: [accountId], references: [id])
+  platformPostId  String?
+  status          PostStatus @default(DRAFT)
+  overrideContent String?
+  errorMessage    String?
+  publishedAt     DateTime?
+  analytics       Analytics[]
+
+  @@unique([postId, accountId])
+  @@index([status])
+  @@index([accountId, status])
+}
+
+model Analytics {
+  id             String       @id @default(cuid())
+  postPlatformId String
+  postPlatform   PostPlatform @relation(fields: [postPlatformId], references: [id], onDelete: Cascade)
+  likes          Int          @default(0)
+  comments       Int          @default(0)
+  shares         Int          @default(0)
+  impressions    Int          @default(0)
+  clicks         Int          @default(0)
+  fetchedAt      DateTime     @default(now())
+
+  @@index([postPlatformId, fetchedAt])
+}
