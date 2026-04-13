@@ -12,6 +12,7 @@ import { useFormatDate } from "@/shared/lib/date-format";
 import type { PlatformCredentialFieldKey, PlatformCredentialStatus } from "@/shared/types/api";
 
 const PLATFORM_ORDER = ["LINKEDIN", "TWITTER", "FACEBOOK", "DISCORD", "REDDIT", "YOUTUBE"] as const;
+const EMPTY_CREDENTIALS: PlatformCredentialStatus[] = [];
 
 type FormState = Partial<Record<PlatformCredentialFieldKey, string>>;
 
@@ -36,7 +37,8 @@ function getSourcePillClass(source: PlatformCredentialStatus["source"]): string 
 }
 
 export default function PlatformCredentialsPage() {
-  const { data: credentials = [], isLoading, mutate } = usePlatformCredentials();
+  const { data, isLoading, mutate } = usePlatformCredentials();
+  const credentials = data ?? EMPTY_CREDENTIALS;
   const [forms, setForms] = useState<Record<string, FormState>>({});
   const [savingPlatform, setSavingPlatform] = useState<string | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
@@ -60,11 +62,12 @@ export default function PlatformCredentialsPage() {
 
   useEffect(() => {
     setForms((current) => {
+      let changed = false;
       const next = { ...current };
 
       for (const credential of credentials) {
-        const existing = next[credential.platform] || {};
-        const seeded = { ...existing };
+        const existing = current[credential.platform] || {};
+        let seeded = existing;
 
         for (const field of credential.fields) {
           if (field.secret || seeded[field.key] !== undefined) {
@@ -73,14 +76,20 @@ export default function PlatformCredentialsPage() {
 
           const configuredValue = credential.configuredValues[field.key];
           if (configuredValue) {
+            if (seeded === existing) {
+              seeded = { ...existing };
+            }
             seeded[field.key] = configuredValue;
+            changed = true;
           }
         }
 
-        next[credential.platform] = seeded;
+        if (seeded !== existing) {
+          next[credential.platform] = seeded;
+        }
       }
 
-      return next;
+      return changed ? next : current;
     });
   }, [credentials]);
 
