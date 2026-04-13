@@ -2,10 +2,91 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.2.2] - 2026-04-13
 
-### Added
-- Design spec document (2026-04-10)
+### Added — Phase 5: 账号稳定性 + 发布守卫
+- 统一账号服务：OAuth token 解密、自动刷新、最近错误回写、最近校验时间记录
+- 账号状态模型：`ACTIVE` / `EXPIRING_SOON` / `EXPIRED` / `MISCONFIGURED` / `ERROR`
+- Discord 手动接入 API：环境变量配置完成后可在账号页直接落库
+- 统一发布服务：即时发布 API 和 BullMQ Worker 共用一套发布逻辑
+- 平台级发布守卫：空内容、字数、媒体数量、未知媒体格式、未实现媒体上传能力统一校验
+- 新增测试：账号状态判断、平台发布校验
+- 新增数据库字段：`Account.lastError`、`Account.lastValidatedAt`
+
+### Changed
+- OAuth 流程补上 `state` 校验，并在回调后保留 locale 返回对应语言的账号页
+- 同平台账号支持多连接，账号页不再按平台一刀切禁用 OAuth 按钮
+- 账号页增加状态徽标、关联帖子数量、最近错误展示
+- 发布失败时的错误信息现在会回写到 `PostPlatform.errorMessage` 和账号状态
+- README 更新为当前实际能力说明，包含账号状态、Discord 接入、发布守卫、Next.js 16 / `proxy.ts`
+- `middleware.ts` 迁移为 `proxy.ts`
+
+### Fixed
+- 修复 token 加密存储后发布/拉取分析直接拿密文调用平台 API 的问题
+- 修复 Worker 场景下平台 client 注册不完整的问题（补齐 YouTube 注册）
+- 修复账号断开时遇到已关联帖子直接触发外键错误的问题，改为前置阻止并给出提示
+- 修复创建定时帖子时无校验导致任务到点才失败的问题，改为创建阶段就拦截
+- 修复 Next.js 16 对 `middleware` 文件约定的废弃警告
+- 应用数据库迁移 `20260413004000_account_status`
+
+## [0.2.1] - 2026-04-12
+
+### Added — Phase 4: UI 打磨 + i18n 深化
+- `useFormatDate` hook：根据 next-intl locale 自动切换 date-fns 中文/英文日期格式
+- 平台名中文化：品牌名 + 中文副标题（领英/推特/脸书/油管），翻译文件新增 `platform` namespace
+- 账号页 UI 全面重设计：3 列品牌色卡片网格、虚线空状态、hover 阴影交互、Discord 弹窗优化（品牌色头部 + 深色代码块）
+
+### Changed
+- 日期格式从英文 "MMM d, yyyy" 改为 "yyyy/MM/dd"（4 个页面：posts/drafts/accounts/calendar）
+- 账号页平台按钮从 inline 改为 grid 卡片布局
+- 关闭 Next.js DevTools（next.config.ts devIndicators: false）
+
+### Fixed
+- 中文 locale 下 date-fns 输出英文月份的问题
+- 平台名 "Twitter 推特" 在窄卡片中换行错乱（改为品牌名+副标题两行布局）
+
+## [0.2.0] - 2026-04-11
+
+### Added — Phase 2: 功能补全
+- Toast 全局通知系统 (sonner)，所有 API 操作有成功/失败提示
+- Analytics 定时同步：BullMQ 每小时自动同步已发布帖子的分析数据
+- LinkedIn OAuth token 自动刷新 (refresh_token grant)
+- LinkedIn Analytics 真实 API (socialActions endpoint)
+- Discord Analytics 真实 API (Bot API reactions)
+- 平台删帖接入 UI：删除帖子时同步删除远端平台帖子
+- 媒体文件上传：Upload API + 图片预览/删除 UI（10MB 限制，类型白名单）
+- Post 编辑页完善：平台徽章显示 + 实时字数统计 + 平台限制对比
+- 批量操作：帖子列表复选框 + 批量发布/删除 API
+- Twitter/X 平台集成：OAuth 2.0 PKCE + v2 API（发帖/删帖/Analytics）
+- YouTube 平台集成：Google OAuth + Data API v3（发帖/Analytics）
+- Worker 入口脚本 (`npm run workers`)
+- .env.example 环境变量模板
+- Docker Compose 配置（PostgreSQL 16 + Redis 7）
+- README 项目文档（中文）
+- Bulk API endpoint (`/api/posts/bulk`)
+- Upload API endpoint (`/api/upload`)
+
+### Added — Phase 3: i18n + 基础设施
+- i18n 中英双语支持 (next-intl + App Router [locale] 路由)
+- 翻译文件：messages/zh.json + messages/en.json (~150 个翻译 key)
+- 所有 8 个页面迁移到 app/[locale]/ 并使用 useTranslations()
+- Sidebar 语言切换按钮（标题栏 EN/中 一键切换）
+- StatusBadge i18n（状态标签根据语言显示中/英文）
+- 动态 metadata（页面标题/描述根据语言切换）
+- Discord 连接引导弹窗（替代简陋的 toast 提示）
+- Prisma 7 pg adapter 适配
+- 数据库 migration 初始化
+
+### Fixed
+- Docker Compose 端口改为 5433/6380 避免与其他项目冲突
+- Discord publish 返回 channelId/messageId 格式，deletePost 和 getAnalytics 兼容新格式
+- Prisma 7 PrismaClient 构造器使用 @prisma/adapter-pg
+- YouTube config 适配 PlatformConfig 接口字段
+
+## [0.1.0] - 2026-04-10
+
+### Added — Phase 1: v1.0 Core
+- Design spec document
 - Implementation plan v1.0 with 13 tasks
 - Project tracking documents (TASKS.md, PROGRESS.md, ROADMAP.md, DECISIONS.md)
 - Platform tier system: T1 (LinkedIn/Facebook/Discord/Reddit), T2 (Twitter/YouTube), T3 (Instagram/TikTok)
