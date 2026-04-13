@@ -1,7 +1,9 @@
 "use client";
 
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+import { EmptyState } from "@/shared/components/empty-state";
 import { PageHeader } from "@/shared/components/page-header";
 import { PlatformIcon } from "@/shared/components/platform-icon";
 import { useDrafts } from "@/shared/hooks/use-posts";
@@ -11,6 +13,18 @@ import { useTranslations } from "next-intl";
 
 interface ErrorResponse {
   error?: string;
+}
+
+function DraftIllustration() {
+  return (
+    <svg viewBox="0 0 80 80" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-20 w-20">
+      <path d="M20 16h28l12 12v36H20z" />
+      <path d="M48 16v12h12" />
+      <path d="M28 38h24" />
+      <path d="M28 48h18" />
+      <path d="M28 58h12" />
+    </svg>
+  );
 }
 
 export default function DraftsPage() {
@@ -49,11 +63,8 @@ export default function DraftsPage() {
         title={t("title")}
         description={t("description")}
         action={
-          <Link
-            href="/posts/new"
-            className="rounded px-4 py-2 text-sm text-white hover:opacity-90 bg-[var(--accent-blue)]"
-          >
-            {tc("newPost")}
+          <Link href="/posts/new">
+            <Button className="bg-[var(--accent-blue)] text-white hover:opacity-90">{tc("newPost")}</Button>
           </Link>
         }
       />
@@ -61,7 +72,16 @@ export default function DraftsPage() {
       {isLoading ? (
         <p className="text-[var(--text-secondary)]">{tc("loading")}</p>
       ) : drafts.length === 0 ? (
-        <p className="text-[var(--text-secondary)]">{t("noDrafts")}</p>
+        <EmptyState
+          icon={<DraftIllustration />}
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
+          action={
+            <Link href="/posts/new">
+              <Button className="bg-[var(--accent-blue)] text-white hover:opacity-90">{t("emptyCta")}</Button>
+            </Link>
+          }
+        />
       ) : (
         <div className="space-y-3">
           {drafts.map((draft: PostListItem) => (
@@ -69,7 +89,7 @@ export default function DraftsPage() {
               key={draft.id}
               className="rounded border border-[var(--border-color)] p-4 transition-colors hover:bg-[var(--bg-hover)]"
             >
-              <div className="flex items-start gap-3">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start">
                 <div className="mt-1 flex shrink-0 gap-1">
                   {draft.platforms.map((platformPost) => (
                     <PlatformIcon key={platformPost.id} platform={platformPost.account.platform} />
@@ -81,23 +101,14 @@ export default function DraftsPage() {
                     {formatDate(new Date(draft.updatedAt), "yyyy/MM/dd HH:mm")}
                   </p>
                 </div>
-                <div className="flex shrink-0 gap-2">
-                  <Link
-                    href={`/posts/${draft.id}/edit`}
-                    className="rounded border border-[var(--border-color)] px-3 py-1 text-xs hover:bg-[var(--bg-hover)]"
-                  >
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <Link href={`/posts/${draft.id}/edit`} className="rounded border border-[var(--border-color)] px-3 py-1 text-xs hover:bg-[var(--bg-hover)]">
                     {tc("edit")}
                   </Link>
-                  <button
-                    onClick={(event) => handlePublish(draft.id, event)}
-                    className="rounded bg-[var(--accent-blue)] px-3 py-1 text-xs text-white hover:opacity-90"
-                  >
+                  <button onClick={(event) => handlePublish(draft.id, event)} className="rounded bg-[var(--accent-blue)] px-3 py-1 text-xs text-white hover:opacity-90">
                     {tc("publish")}
                   </button>
-                  <button
-                    onClick={(event) => handleDelete(draft.id, event)}
-                    className="rounded border border-[var(--border-color)] px-3 py-1 text-xs text-[var(--accent-red)] hover:bg-red-50"
-                  >
+                  <button onClick={(event) => handleDelete(draft.id, event)} className="rounded border border-[var(--border-color)] px-3 py-1 text-xs text-[var(--accent-red)] hover:bg-red-50">
                     {tc("delete")}
                   </button>
                 </div>

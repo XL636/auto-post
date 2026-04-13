@@ -9,7 +9,8 @@ import { requirePlatformCredential } from "@/modules/platform-credentials/creden
 export class DiscordClient implements PlatformClient {
   constructor(private account: Account) {}
 
-  async getAuthUrl(_redirectUri: string): Promise<string> {
+  async getAuthUrl(redirectUri: string): Promise<string> {
+    void redirectUri;
     return "";
   }
 

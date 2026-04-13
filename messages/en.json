@@ -43,7 +43,10 @@
     "published": "Published",
     "failed": "Failed",
     "draft": "Drafts",
-    "noPosts": "No posts yet. Create your first post!"
+    "noPosts": "No posts yet. Create your first post!",
+    "emptyTitle": "No activity yet",
+    "emptyDescription": "Published posts, schedules, and drafts will show up here so you can track everything at a glance.",
+    "emptyCta": "Create your first post"
   },
   "posts": {
     "title": "Posts",
@@ -52,7 +55,14 @@
     "noPosts": "No posts found.",
     "confirmDelete": "Delete this post?",
     "confirmBulkDelete": "Delete {count} posts?",
-    "confirmBulkPublish": "Publish {count} posts?"
+    "confirmBulkPublish": "Publish {count} posts?",
+    "deleteDialogTitle": "Delete post",
+    "bulkDeleteDialogTitle": "Delete selected posts",
+    "bulkPublishDialogTitle": "Publish selected posts",
+    "retry": "Retry",
+    "emptyTitle": "No posts yet",
+    "emptyDescription": "Once you create content, this list will show drafts, scheduled posts, published posts, and failures.",
+    "emptyCta": "Create a post"
   },
   "newPost": {
     "title": "New Post",
@@ -67,16 +77,32 @@
     "schedule": "Schedule (optional)",
     "publishNow": "Publish Now",
     "scheduleSend": "Schedule",
-    "saveDraft": "Save Draft"
+    "saveDraft": "Save Draft",
+    "platformLimits": "Platform limits",
+    "timezoneHint": "Your timezone: {tz}",
+    "schedulePast": "Scheduled time is in the past",
+    "dropzoneTitle": "Drop files here or click to upload",
+    "dropzoneDescription": "Supports images plus MP4 and WebM video",
+    "uploadingFile": "uploading",
+    "scheduleTooltip": "Set a schedule time first",
+    "limitExceededTooltip": "Content exceeds the character limit for {platform}"
   },
   "editPost": {
     "title": "Edit Post",
-    "confirmDelete": "Delete this post?"
+    "confirmDelete": "Delete this post?",
+    "platformLimits": "Platform limits",
+    "schedule": "Schedule",
+    "timezoneHint": "Your timezone: {tz}",
+    "schedulePast": "Scheduled time is in the past",
+    "deleteDialogTitle": "Delete post"
   },
   "drafts": {
     "title": "Drafts",
     "description": "Posts saved for later",
-    "noDrafts": "No drafts yet."
+    "noDrafts": "No drafts yet.",
+    "emptyTitle": "No drafts here yet",
+    "emptyDescription": "Start writing something now and come back later when you are ready to publish.",
+    "emptyCta": "Start writing"
   },
   "calendar": {
     "title": "Calendar",
@@ -89,7 +115,9 @@
       "Fri",
       "Sat",
       "Sun"
-    ]
+    ],
+    "emptyDay": "No posts scheduled for this day",
+    "emptyMonth": "There is nothing scheduled for this month yet."
   },
   "analytics": {
     "title": "Analytics",
@@ -102,7 +130,11 @@
     "likes": "Likes",
     "comments": "Comments",
     "shares": "Shares",
-    "impressions": "Impressions"
+    "impressions": "Impressions",
+    "clicks": "Clicks",
+    "emptyTitle": "No analytics to show yet",
+    "emptyDescription": "Connect accounts and publish posts first so the app can start pulling engagement and impression data.",
+    "emptyCta": "Connect accounts"
   },
   "accounts": {
     "title": "Accounts",
@@ -139,7 +171,17 @@
       "database": "Saved in app",
       "environment": "From env",
       "missing": "Needs setup"
-    }
+    },
+    "emptyDescription": "Connect at least one platform account first. You will then see auth health and publishing readiness here.",
+    "credentialsNeeded": "Credentials are required first",
+    "credentialsNeededDesc": "{platform} needs developer credentials before you can connect the account.",
+    "setupCredentials": "Set up credentials",
+    "reconnect": "Reconnect",
+    "fixCredentials": "Fix credentials",
+    "showError": "Show error details",
+    "hideError": "Hide error details",
+    "disconnectTooltip": "Cannot disconnect: {count} posts use this account. Delete or reassign them first.",
+    "disconnectDialogTitle": "Disconnect account"
   },
   "platform": {
     "linkedin": "",
@@ -189,9 +231,9 @@
     "notConfigured": "This platform is not configured yet",
     "updatedAt": "Last updated: {value}",
     "source": {
-      "database": "Using credentials saved in the app",
-      "environment": "Using credentials from environment variables",
-      "missing": "No credentials configured yet"
+      "database": "Custom credentials",
+      "environment": "Using server config",
+      "missing": "Not configured"
     },
     "platformNames": {
       "linkedin": "LinkedIn",
@@ -208,6 +250,17 @@
       "discord": "Create a Discord Bot and Webhook, then paste the Bot Token and Webhook URL here.",
       "reddit": "Create an app in Reddit Apps, then fill in the Client ID and Client Secret here.",
       "youtube": "Create an OAuth Client in Google Cloud Console, then paste the Client ID and Client Secret here."
+    },
+    "copy": "Copy",
+    "copied": "Copied",
+    "sourceEnvironmentTooltip": "These credentials are set in the server environment variables.",
+    "portalHelp": {
+      "linkedin": "Create an app at linkedin.com/developers",
+      "twitter": "Create a project at developer.x.com",
+      "facebook": "Create an app at developers.facebook.com",
+      "discord": "Create a bot at discord.com/developers",
+      "reddit": "Create an app at reddit.com/prefs/apps",
+      "youtube": "Enable YouTube Data API at console.cloud.google.com"
     }
   }
 }

@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.4] - 2026-04-13
+
+### Added — Phase 7: UX 优化
+- 新增移动端侧边栏抽屉、顶部导航栏、遮罩关闭交互
+- 新增通用 UI 组件：`ConfirmDialog`、`Skeleton`、空状态组件、平台限制条组件、确认弹窗 hook
+- 新增更完整的空状态引导与加载骨架屏，覆盖 Dashboard / Posts / Drafts / Accounts / Analytics / Calendar
+- 新增帖子失败重试入口与失败原因展示
+
+### Changed
+- Dashboard、Analytics、Calendar、Posts 列表适配移动端布局
+- 新建/编辑帖子页改为更清晰的操作流：拖拽上传、平台字数限制、时区提示、定时校验、三按钮操作区
+- 账号页改为上下文式引导：缺少凭证时显示卡片内联提醒，异常账号提供 Reconnect / Fix Credentials 操作
+- 平台凭证页增加 callback URL 复制、凭证来源解释、平台申请入口提示
+
+### Fixed
+- 修复移动端下固定侧边栏挤压主内容区域的问题
+- 修复原生 `confirm()` 带来的交互割裂，统一改为自定义确认弹窗
+
 ## [0.2.3] - 2026-04-13
 
 ### Added — Phase 6: 用户自助平台凭证

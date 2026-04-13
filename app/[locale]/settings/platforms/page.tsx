@@ -9,14 +9,20 @@ import { PageHeader } from "@/shared/components/page-header";
 import { PlatformIcon } from "@/shared/components/platform-icon";
 import { usePlatformCredentials } from "@/shared/hooks/use-platform-credentials";
 import { useFormatDate } from "@/shared/lib/date-format";
-import type {
-  PlatformCredentialFieldKey,
-  PlatformCredentialStatus,
-} from "@/shared/types/api";
+import type { PlatformCredentialFieldKey, PlatformCredentialStatus } from "@/shared/types/api";
 
 const PLATFORM_ORDER = ["LINKEDIN", "TWITTER", "FACEBOOK", "DISCORD", "REDDIT", "YOUTUBE"] as const;
 
 type FormState = Partial<Record<PlatformCredentialFieldKey, string>>;
+
+function LockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-3.5 w-3.5">
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V8a4 4 0 1 1 8 0v3" />
+    </svg>
+  );
+}
 
 function getSourcePillClass(source: PlatformCredentialStatus["source"]): string {
   switch (source) {
@@ -111,21 +117,17 @@ export default function PlatformCredentialsPage() {
         return;
       }
 
-      setForms((current) => ({
-        ...current,
-        [credential.platform]: {
-          clientId: form.clientId,
-        },
-      }));
-      toast.success(
-        tt("credentialsSaved", {
-          platform: t(`platformNames.${credential.platform.toLowerCase()}`),
-        }),
-      );
+      setForms((current) => ({ ...current, [credential.platform]: { clientId: form.clientId } }));
+      toast.success(tt("credentialsSaved", { platform: t(`platformNames.${credential.platform.toLowerCase()}`) }));
       await mutate();
     } finally {
       setSavingPlatform(null);
     }
+  };
+
+  const handleCopy = async (value: string) => {
+    await navigator.clipboard.writeText(value);
+    toast.success(t("copied"));
   };
 
   return (
@@ -139,35 +141,35 @@ export default function PlatformCredentialsPage() {
             const form = forms[credential.platform] || {};
             const highlighted = selectedPlatform === credential.platform;
             const platformKey = credential.platform.toLowerCase();
+            const isEnvSource = credential.source === "environment";
 
             return (
-              <section
-                key={credential.platform}
-                className={`rounded border p-5 ${
-                  highlighted
-                    ? "border-[var(--accent-blue)] shadow-sm"
-                    : "border-[var(--border-color)]"
-                }`}
-              >
-                <div className="mb-4 flex items-center gap-3">
+              <section key={credential.platform} className={`rounded border p-5 ${highlighted ? "border-[var(--accent-blue)] shadow-sm" : "border-[var(--border-color)]"}`}>
+                <div className="mb-4 flex flex-wrap items-start gap-3">
                   <PlatformIcon platform={credential.platform} size={28} />
-                  <div>
-                    <h2 className="text-sm font-semibold text-[var(--text-primary)]">
-                      {t(`platformNames.${platformKey}`)}
-                    </h2>
-                    <p className="text-xs text-[var(--text-tertiary)]">{t(`help.${platformKey}`)}</p>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-sm font-semibold text-[var(--text-primary)]">{t(`platformNames.${platformKey}`)}</h2>
+                    <p className="mt-1 text-xs text-[var(--text-tertiary)]">{t(`help.${platformKey}`)}</p>
+                    <p className="mt-1 text-xs text-[var(--text-secondary)]">{t(`portalHelp.${platformKey}`)}</p>
                   </div>
                   <span
-                    className={`ml-auto rounded px-2 py-1 text-xs ${getSourcePillClass(credential.source)}`}
+                    title={isEnvSource ? t("sourceEnvironmentTooltip") : undefined}
+                    className={`ml-auto inline-flex items-center gap-1 rounded px-2 py-1 text-xs ${getSourcePillClass(credential.source)}`}
                   >
+                    {isEnvSource ? <LockIcon /> : null}
                     {t(`source.${credential.source}`)}
                   </span>
                 </div>
 
                 {credential.callbackUrl ? (
                   <div className="mb-4 rounded bg-[var(--bg-secondary)] p-3 text-xs text-[var(--text-secondary)]">
-                    <div className="mb-1 font-medium text-[var(--text-primary)]">{t("callbackUrl")}</div>
-                    <code>{credential.callbackUrl}</code>
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <div className="font-medium text-[var(--text-primary)]">{t("callbackUrl")}</div>
+                      <button type="button" onClick={() => handleCopy(credential.callbackUrl!)} className="text-[var(--accent-blue)] hover:underline">
+                        {t("copy")}
+                      </button>
+                    </div>
+                    <code className="break-all">{credential.callbackUrl}</code>
                   </div>
                 ) : null}
 
@@ -187,9 +189,7 @@ export default function PlatformCredentialsPage() {
                         <Input
                           type={field.secret ? "password" : "text"}
                           value={value}
-                          onChange={(event) =>
-                            handleFieldChange(credential.platform, field.key, event.target.value)
-                          }
+                          onChange={(event) => handleFieldChange(credential.platform, field.key, event.target.value)}
                           placeholder={placeholder}
                           className="border-[var(--border-color)]"
                         />
@@ -198,19 +198,13 @@ export default function PlatformCredentialsPage() {
                   })}
                 </div>
 
-                <div className="mt-4 flex items-center justify-between gap-3">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                   <p className="text-xs text-[var(--text-tertiary)]">
                     {credential.updatedAt
-                      ? t("updatedAt", {
-                          value: formatDate(new Date(credential.updatedAt), "yyyy/MM/dd HH:mm"),
-                        })
+                      ? t("updatedAt", { value: formatDate(new Date(credential.updatedAt), "yyyy/MM/dd HH:mm") })
                       : t("notConfigured")}
                   </p>
-                  <Button
-                    onClick={() => handleSave(credential)}
-                    disabled={savingPlatform === credential.platform}
-                    className="bg-[var(--accent-blue)] text-white hover:opacity-90"
-                  >
+                  <Button onClick={() => handleSave(credential)} disabled={savingPlatform === credential.platform} className="bg-[var(--accent-blue)] text-white hover:opacity-90">
                     {savingPlatform === credential.platform ? tc("saving") : tc("save")}
                   </Button>
                 </div>

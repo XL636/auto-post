@@ -43,7 +43,10 @@
     "published": "已发布",
     "failed": "失败",
     "draft": "草稿",
-    "noPosts": "还没有帖子，快去创建你的第一条帖子吧！"
+    "noPosts": "还没有帖子，快去创建你的第一条帖子吧！",
+    "emptyTitle": "还没有内容活动",
+    "emptyDescription": "发布、排程和草稿都会先出现在这里，方便你快速查看整体进度。",
+    "emptyCta": "创建第一条帖子"
   },
   "posts": {
     "title": "帖子",
@@ -52,7 +55,14 @@
     "noPosts": "没有找到帖子。",
     "confirmDelete": "确定要删除这条帖子吗？",
     "confirmBulkDelete": "确定要删除 {count} 条帖子吗？",
-    "confirmBulkPublish": "确定要发布 {count} 条帖子吗？"
+    "confirmBulkPublish": "确定要发布 {count} 条帖子吗？",
+    "deleteDialogTitle": "删除帖子",
+    "bulkDeleteDialogTitle": "批量删除帖子",
+    "bulkPublishDialogTitle": "批量发布帖子",
+    "retry": "重试",
+    "emptyTitle": "还没有帖子",
+    "emptyDescription": "创建后你可以在这里统一查看排程、已发布和失败的内容。",
+    "emptyCta": "创建帖子"
   },
   "newPost": {
     "title": "新建帖子",
@@ -67,16 +77,32 @@
     "schedule": "定时（可选）",
     "publishNow": "立即发布",
     "scheduleSend": "定时发送",
-    "saveDraft": "保存草稿"
+    "saveDraft": "保存草稿",
+    "platformLimits": "平台限制",
+    "timezoneHint": "当前时区：{tz}",
+    "schedulePast": "定时时间已经早于当前时间",
+    "dropzoneTitle": "将文件拖到这里，或点击上传",
+    "dropzoneDescription": "支持图片、MP4 和 WebM 视频",
+    "uploadingFile": "上传中",
+    "scheduleTooltip": "请先设置定时时间",
+    "limitExceededTooltip": "内容已超出 {platform} 的字数限制"
   },
   "editPost": {
     "title": "编辑帖子",
-    "confirmDelete": "确定要删除这条帖子吗？"
+    "confirmDelete": "确定要删除这条帖子吗？",
+    "platformLimits": "平台限制",
+    "schedule": "定时",
+    "timezoneHint": "当前时区：{tz}",
+    "schedulePast": "定时时间已经早于当前时间",
+    "deleteDialogTitle": "删除帖子"
   },
   "drafts": {
     "title": "草稿",
     "description": "暂存的帖子",
-    "noDrafts": "还没有草稿。"
+    "noDrafts": "还没有草稿。",
+    "emptyTitle": "这里还没有草稿",
+    "emptyDescription": "先写点内容存起来，之后再决定什么时候发出去。",
+    "emptyCta": "开始写作"
   },
   "calendar": {
     "title": "日历",
@@ -89,7 +115,9 @@
       "周五",
       "周六",
       "周日"
-    ]
+    ],
+    "emptyDay": "当天还没有安排帖子",
+    "emptyMonth": "这个月还没有任何排程内容。"
   },
   "analytics": {
     "title": "数据分析",
@@ -102,7 +130,11 @@
     "likes": "点赞",
     "comments": "评论",
     "shares": "分享",
-    "impressions": "曝光"
+    "impressions": "曝光",
+    "clicks": "点击",
+    "emptyTitle": "还没有可展示的数据",
+    "emptyDescription": "先连接账号并发布内容，系统才会开始抓取平台互动和曝光数据。",
+    "emptyCta": "去连接账号"
   },
   "accounts": {
     "title": "账号",
@@ -139,7 +171,17 @@
       "database": "已保存",
       "environment": "来自环境变量",
       "missing": "待配置"
-    }
+    },
+    "emptyDescription": "先连接一个平台账号，之后你就能在这里查看授权状态和发帖可用性。",
+    "credentialsNeeded": "需要先配置开发凭证",
+    "credentialsNeededDesc": "{platform} 需要先填写开发者凭证，配置完成后再回来连接即可。",
+    "setupCredentials": "去设置凭证",
+    "reconnect": "重新连接",
+    "fixCredentials": "修复凭证",
+    "showError": "展开错误详情",
+    "hideError": "收起错误详情",
+    "disconnectTooltip": "无法断开：有 {count} 条帖子正在使用这个账号，请先删除或改绑。",
+    "disconnectDialogTitle": "断开账号"
   },
   "platform": {
     "linkedin": "领英",
@@ -189,9 +231,9 @@
     "notConfigured": "这个平台还没配置凭证",
     "updatedAt": "最近更新：{value}",
     "source": {
-      "database": "当前使用应用内保存的凭证",
-      "environment": "当前使用环境变量里的凭证",
-      "missing": "当前还没配置凭证"
+      "database": "自定义凭证",
+      "environment": "使用服务器配置",
+      "missing": "未配置"
     },
     "platformNames": {
       "linkedin": "LinkedIn",
@@ -208,6 +250,17 @@
       "discord": "创建 Discord Bot 和 Webhook 后，把 Bot Token 与 Webhook URL 填到这里。",
       "reddit": "去 Reddit Apps 创建应用后，把 Client ID 和 Client Secret 填到这里。",
       "youtube": "去 Google Cloud Console 创建 OAuth Client 后，把 Client ID 和 Client Secret 填到这里。"
+    },
+    "copy": "复制",
+    "copied": "已复制",
+    "sourceEnvironmentTooltip": "这些凭证来自服务器环境变量，由部署环境统一管理。",
+    "portalHelp": {
+      "linkedin": "前往 linkedin.com/developers 创建应用",
+      "twitter": "前往 developer.x.com 创建项目",
+      "facebook": "前往 developers.facebook.com 创建应用",
+      "discord": "前往 discord.com/developers 创建机器人",
+      "reddit": "前往 reddit.com/prefs/apps 创建应用",
+      "youtube": "前往 console.cloud.google.com 启用 YouTube Data API"
     }
   }
 }
