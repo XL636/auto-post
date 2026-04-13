@@ -48,6 +48,14 @@ describe("getAccountHealth", () => {
     expect(health.canPublish).toBe(true);
   });
 
+
+  it("marks accounts without platform credentials as misconfigured", () => {
+    const health = getAccountHealth(createAccount(), false);
+
+    expect(health.status).toBe("MISCONFIGURED");
+    expect(health.canPublish).toBe(false);
+  });
+
   it("blocks publish when the last error looks like an auth problem", () => {
     const health = getAccountHealth(createAccount({ lastError: "Token refresh failed" }));
 

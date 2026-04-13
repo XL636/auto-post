@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
+import type { Account, Platform } from "@prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { getPlatformClient } from "@/modules/platforms";
 import { encrypt } from "@/shared/lib/encryption";
 import { handleTwitterCallback } from "@/modules/platforms/twitter/twitter.auth";
-import type { Platform, Account } from "@prisma/client";
-import { getDefaultUserId, getLocalizedAccountsPath } from "@/modules/accounts/account.service";
+import {
+  getDefaultUserId,
+  getLocalizedAccountsPath,
+} from "@/modules/accounts/account.service";
+import { requirePlatformCredential } from "@/modules/platform-credentials/credential.service";
 import { routing } from "@/i18n/routing";
 
 const OAUTH_COOKIE_PATH = "/api/oauth/twitter";
@@ -53,6 +57,28 @@ function clearOAuthCookies(response: NextResponse): void {
   });
 }
 
+function createPlaceholderAccount(platform: Platform): Account {
+  const now = new Date();
+
+  return {
+    id: `${platform.toLowerCase()}-oauth`,
+    userId: getDefaultUserId(),
+    platform,
+    accessToken: "",
+    refreshToken: null,
+    platformUserId: "",
+    displayName: "",
+    avatarUrl: null,
+    tokenExpiresAt: null,
+    tokenType: null,
+    scopes: [],
+    lastError: null,
+    lastValidatedAt: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 export async function GET(req: Request) {
   const platform = "twitter";
   const platformKey = "TWITTER" as Platform;
@@ -83,9 +109,16 @@ export async function GET(req: Request) {
   }
 
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/oauth/twitter/callback`;
-  const tokens = await handleTwitterCallback(code, redirectUri, codeVerifier);
+  const credentials = await requirePlatformCredential("TWITTER", getDefaultUserId());
+  const tokens = await handleTwitterCallback(
+    code,
+    redirectUri,
+    credentials.clientId || "",
+    credentials.clientSecret || "",
+    codeVerifier,
+  );
 
-  const dummyAccount = { platform: platformKey, accessToken: "" } as Account;
+  const dummyAccount = createPlaceholderAccount(platformKey);
   const tempAccount = { ...dummyAccount, accessToken: tokens.accessToken } as Account;
   const tempClient = getPlatformClient(platformKey, tempAccount);
   const profile = await tempClient.getUserProfile();

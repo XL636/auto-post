@@ -3,11 +3,13 @@
 import { useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useRouter } from "@/i18n/navigation";
 import { useAccounts } from "@/shared/hooks/use-accounts";
+import { usePlatformCredentials } from "@/shared/hooks/use-platform-credentials";
 import { PageHeader } from "@/shared/components/page-header";
 import { PlatformIcon } from "@/shared/components/platform-icon";
 import { useFormatDate } from "@/shared/lib/date-format";
-import type { AccountListItem } from "@/shared/types/api";
+import type { AccountListItem, PlatformCredentialStatus } from "@/shared/types/api";
 
 const BRAND_COLORS: Record<string, string> = {
   linkedin: "#0A66C2",
@@ -19,13 +21,15 @@ const BRAND_COLORS: Record<string, string> = {
 };
 
 const ALL_PLATFORMS = [
-  { key: "linkedin", brand: "LinkedIn", hasOAuth: true },
-  { key: "twitter", brand: "Twitter", hasOAuth: true },
-  { key: "facebook", brand: "Facebook", hasOAuth: true },
-  { key: "discord", brand: "Discord", hasOAuth: false },
-  { key: "reddit", brand: "Reddit", hasOAuth: true },
-  { key: "youtube", brand: "YouTube", hasOAuth: true },
+  { key: "linkedin", brand: "LinkedIn" },
+  { key: "twitter", brand: "Twitter" },
+  { key: "facebook", brand: "Facebook" },
+  { key: "discord", brand: "Discord" },
+  { key: "reddit", brand: "Reddit" },
+  { key: "youtube", brand: "YouTube" },
 ] as const;
+
+type PlatformKey = (typeof ALL_PLATFORMS)[number]["key"];
 
 function getPlatformLabel(platform: string, translatedName: string): string {
   const brand = platform.charAt(0).toUpperCase() + platform.slice(1).toLowerCase();
@@ -40,9 +44,21 @@ const ACCOUNT_STATUS_STYLES: Record<AccountListItem["status"], string> = {
   ERROR: "bg-orange-50 text-[var(--accent-orange)]",
 };
 
+function getCredentialStatusClass(status: PlatformCredentialStatus["source"] | "missing"): string {
+  switch (status) {
+    case "database":
+      return "bg-emerald-50 text-emerald-700";
+    case "environment":
+      return "bg-amber-50 text-amber-700";
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
+}
+
 export default function AccountsPage() {
+  const router = useRouter();
   const { data: accounts = [], isLoading, mutate } = useAccounts();
-  const [showDiscordGuide, setShowDiscordGuide] = useState(false);
+  const { data: credentialStatuses = [], isLoading: credentialsLoading } = usePlatformCredentials();
   const [isConnectingDiscord, setIsConnectingDiscord] = useState(false);
   const connectSectionRef = useRef<HTMLDivElement>(null);
   const locale = useLocale();
@@ -60,14 +76,9 @@ export default function AccountsPage() {
     }, {});
   }, [accounts]);
 
-  const handleConnect = (platform: string) => {
-    if (platform === "discord") {
-      setShowDiscordGuide(true);
-      return;
-    }
-
-    window.location.assign(`/api/oauth/${platform}?locale=${locale}`);
-  };
+  const credentialStatusByPlatform = useMemo(() => {
+    return new Map(credentialStatuses.map((status) => [status.platform.toLowerCase(), status]));
+  }, [credentialStatuses]);
 
   const handleDiscordConnect = async () => {
     setIsConnectingDiscord(true);
@@ -80,11 +91,27 @@ export default function AccountsPage() {
       }
 
       toast.success(tt("accountConnected", { platform: "Discord" }));
-      setShowDiscordGuide(false);
       await mutate();
     } finally {
       setIsConnectingDiscord(false);
     }
+  };
+
+  const handleConnect = (platform: PlatformKey) => {
+    const credentialStatus = credentialStatusByPlatform.get(platform);
+
+    if (!credentialStatus?.configured) {
+      toast.error(t("credentialsRequired", { platform: ALL_PLATFORMS.find((item) => item.key === platform)?.brand || platform }));
+      router.push(`/settings/platforms?platform=${platform.toUpperCase()}`);
+      return;
+    }
+
+    if (platform === "discord") {
+      void handleDiscordConnect();
+      return;
+    }
+
+    window.location.assign(`/api/oauth/${platform}?locale=${locale}`);
   };
 
   const handleDisconnect = async (account: AccountListItem) => {
@@ -121,30 +148,43 @@ export default function AccountsPage() {
 
       <div ref={connectSectionRef} className="mb-10">
         <h2 className="mb-4 text-sm font-medium text-[var(--text-tertiary)]">{t("connect")}</h2>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {ALL_PLATFORMS.map((platform) => {
             const connectedCount = connectedCountByPlatform[platform.key] || 0;
             const isDiscordConnected = platform.key === "discord" && connectedCount > 0;
+            const credentialStatus = credentialStatusByPlatform.get(platform.key);
             const brandColor = BRAND_COLORS[platform.key];
+            const needsCredentialConfig = !credentialStatus?.configured;
+            const source = credentialStatus?.source || "missing";
 
             return (
               <button
                 key={platform.key}
                 onClick={() => handleConnect(platform.key)}
-                disabled={isDiscordConnected}
-                className={`relative flex h-[72px] items-center gap-3 rounded-[4px] border border-[var(--border-color)] border-l-[3px] px-4 text-sm text-[var(--text-primary)] duration-150 transition-[background-color,border-left-width,box-shadow] hover:border-l-4 hover:shadow-sm ${
+                disabled={isDiscordConnected || credentialsLoading || isConnectingDiscord}
+                className={`relative flex min-h-[84px] items-center gap-3 rounded-[4px] border border-[var(--border-color)] border-l-[3px] px-4 text-left text-sm transition-[background-color,border-left-width,box-shadow] duration-150 hover:border-l-4 hover:shadow-sm ${
                   isDiscordConnected
                     ? "bg-green-50/50 disabled:hover:bg-green-50/50"
-                    : "bg-white hover:bg-blue-50"
+                    : needsCredentialConfig
+                      ? "bg-amber-50/50 hover:bg-amber-50"
+                      : "bg-white hover:bg-blue-50"
                 } disabled:cursor-not-allowed disabled:opacity-60`}
                 style={{ borderLeftColor: brandColor }}
               >
                 <PlatformIcon platform={platform.key.toUpperCase()} size={24} />
-                <div className="flex flex-col items-start text-left">
-                  <span className="font-medium text-sm">{platform.brand}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">{platform.brand}</span>
+                    <span className={`rounded px-1.5 py-0.5 text-[10px] ${getCredentialStatusClass(source)}`}>
+                      {needsCredentialConfig ? t("credentialsMissing") : t(`credentialSource.${source}`)}
+                    </span>
+                  </div>
                   {tp(platform.key) ? (
-                    <span className="text-xs text-[var(--text-tertiary)]">{tp(platform.key)}</span>
+                    <p className="text-xs text-[var(--text-tertiary)]">{tp(platform.key)}</p>
                   ) : null}
+                  <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+                    {needsCredentialConfig ? t("configureCredentials") : t("credentialsReady")}
+                  </p>
                 </div>
                 {connectedCount > 0 ? (
                   <span className="absolute right-2.5 top-2.5 rounded-full bg-[var(--accent-green)] px-1.5 py-0.5 text-[10px] leading-none text-white">
@@ -249,56 +289,6 @@ export default function AccountsPage() {
           </div>
         )}
       </div>
-
-      {showDiscordGuide ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-          onClick={() => setShowDiscordGuide(false)}
-        >
-          <div
-            className="mx-4 w-full max-w-md overflow-hidden rounded-lg bg-white shadow-lg"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="h-2 bg-[#5865F2]" />
-            <div className="p-6">
-              <div className="mb-4 flex items-center gap-2">
-                <PlatformIcon platform="DISCORD" size={24} />
-                <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-                  {t("discordGuideTitle")}
-                </h3>
-              </div>
-              <div className="space-y-3 text-sm text-[var(--text-secondary)]">
-                <p>{t("discordGuideDesc")}</p>
-                <pre className="overflow-x-auto rounded-[4px] bg-[#1E1E1E] p-4 font-mono text-xs leading-relaxed text-[#D4D4D4]">
-                  <code>
-                    <span className="text-[#9CDCFE]">DISCORD_BOT_TOKEN</span>
-                    <span className="text-[#D4D4D4]">=your_bot_token</span>
-                    {"\n"}
-                    <span className="text-[#9CDCFE]">DISCORD_WEBHOOK_URL</span>
-                    <span className="text-[#D4D4D4]">=your_webhook_url</span>
-                  </code>
-                </pre>
-                <p className="text-xs text-[var(--text-tertiary)]">{t("discordGuidePath")}</p>
-              </div>
-              <div className="mt-5 flex justify-end gap-3">
-                <button
-                  onClick={() => setShowDiscordGuide(false)}
-                  className="rounded-[4px] border border-[var(--border-color)] px-4 py-2 text-sm font-medium text-[var(--text-primary)]"
-                >
-                  {tc("cancel")}
-                </button>
-                <button
-                  onClick={handleDiscordConnect}
-                  disabled={isConnectingDiscord}
-                  className="rounded-[4px] bg-[#5865F2] px-4 py-2 text-sm font-medium text-white transition-all duration-150 hover:bg-[#4752C4] disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  {isConnectingDiscord ? t("connectingDiscord") : t("discordConnect")}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

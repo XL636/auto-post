@@ -5,36 +5,49 @@ import { getLinkedInAuthUrl, handleLinkedInCallback } from "./linkedin.auth";
 import { registerPlatform } from "../registry";
 import { toErrorMessage } from "@/shared/lib/error";
 import { linkedinConfig } from "./linkedin.config";
+import { requirePlatformCredential } from "@/modules/platform-credentials/credential.service";
 
 const API_BASE = "https://api.linkedin.com/v2";
 
 export class LinkedInClient implements PlatformClient {
   constructor(private account: Account) {}
 
-  getAuthUrl(redirectUri: string): string {
-    return getLinkedInAuthUrl(redirectUri);
+  async getAuthUrl(redirectUri: string): Promise<string> {
+    const credentials = await requirePlatformCredential("LINKEDIN", this.account.userId);
+    return getLinkedInAuthUrl(redirectUri, credentials.clientId || "");
   }
 
-  handleCallback(code: string, redirectUri: string): Promise<TokenPair> {
-    return handleLinkedInCallback(code, redirectUri);
+  async handleCallback(code: string, redirectUri: string): Promise<TokenPair> {
+    const credentials = await requirePlatformCredential("LINKEDIN", this.account.userId);
+    return handleLinkedInCallback(
+      code,
+      redirectUri,
+      credentials.clientId || "",
+      credentials.clientSecret || "",
+    );
   }
 
   async refreshToken(): Promise<TokenPair> {
     if (!this.account.refreshToken) {
       throw new Error("No refresh token available. Re-authorization required.");
     }
+
+    const credentials = await requirePlatformCredential("LINKEDIN", this.account.userId);
     const res = await fetch("https://www.linkedin.com/oauth/v2/accessToken", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         grant_type: "refresh_token",
         refresh_token: this.account.refreshToken,
-        client_id: process.env.LINKEDIN_CLIENT_ID ?? "",
-        client_secret: process.env.LINKEDIN_CLIENT_SECRET ?? "",
+        client_id: credentials.clientId || "",
+        client_secret: credentials.clientSecret || "",
       }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error_description || data.error);
+    if (!res.ok) {
+      throw new Error(data.error_description || data.error);
+    }
+
     return {
       accessToken: data.access_token,
       refreshToken: data.refresh_token || this.account.refreshToken,
@@ -67,7 +80,9 @@ export class LinkedInClient implements PlatformClient {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) return { success: false, error: data.message || "LinkedIn publish failed" };
+      if (!res.ok) {
+        return { success: false, error: data.message || "LinkedIn publish failed" };
+      }
       return { success: true, platformPostId: data.id };
     } catch (error) {
       return { success: false, error: toErrorMessage(error, "Publish failed") };
@@ -89,7 +104,9 @@ export class LinkedInClient implements PlatformClient {
           "X-Restli-Protocol-Version": "2.0.0",
         },
       });
-      if (!res.ok) return { likes: 0, comments: 0, shares: 0, impressions: 0, clicks: 0 };
+      if (!res.ok) {
+        return { likes: 0, comments: 0, shares: 0, impressions: 0, clicks: 0 };
+      }
       const data = await res.json();
       return {
         likes: data.likesSummary?.totalLikes ?? 0,

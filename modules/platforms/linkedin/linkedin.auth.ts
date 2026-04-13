@@ -3,22 +3,26 @@ import type { TokenPair } from "@/shared/types";
 const AUTHORIZE_URL = "https://www.linkedin.com/oauth/v2/authorization";
 const TOKEN_URL = "https://www.linkedin.com/oauth/v2/accessToken";
 
-export function getLinkedInAuthUrl(redirectUri: string, state?: string): string {
+export function getLinkedInAuthUrl(redirectUri: string, clientId: string, state?: string): string {
   const params = new URLSearchParams({
     response_type: "code",
-    client_id: process.env.LINKEDIN_CLIENT_ID!,
+    client_id: clientId,
     redirect_uri: redirectUri,
     scope: "openid profile w_member_social",
   });
+
   if (state) {
     params.set("state", state);
   }
+
   return `${AUTHORIZE_URL}?${params}`;
 }
 
 export async function handleLinkedInCallback(
   code: string,
   redirectUri: string,
+  clientId: string,
+  clientSecret: string,
 ): Promise<TokenPair> {
   const res = await fetch(TOKEN_URL, {
     method: "POST",
@@ -27,12 +31,15 @@ export async function handleLinkedInCallback(
       grant_type: "authorization_code",
       code,
       redirect_uri: redirectUri,
-      client_id: process.env.LINKEDIN_CLIENT_ID!,
-      client_secret: process.env.LINKEDIN_CLIENT_SECRET!,
+      client_id: clientId,
+      client_secret: clientSecret,
     }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(`LinkedIn OAuth error: ${data.error_description}`);
+  if (!res.ok) {
+    throw new Error(`LinkedIn OAuth error: ${data.error_description || data.error}`);
+  }
+
   return {
     accessToken: data.access_token,
     refreshToken: data.refresh_token,

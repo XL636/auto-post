@@ -9,7 +9,8 @@
     "drafts": "Drafts",
     "calendar": "Calendar",
     "analytics": "Analytics",
-    "accounts": "Accounts"
+    "accounts": "Accounts",
+    "credentials": "Credentials"
   },
   "lang": {
     "zh": "中文",
@@ -105,7 +106,7 @@
   },
   "accounts": {
     "title": "Accounts",
-    "description": "Manage your connected social media accounts",
+    "description": "Manage connected accounts and configure each platform credential first",
     "connect": "Connect a Platform",
     "connected": "Connected Accounts",
     "noAccounts": "No accounts connected yet.",
@@ -113,10 +114,10 @@
     "confirmDisconnect": "Disconnect this account?",
     "connectedAt": "Connected",
     "tokenExpires": "Token expires",
-    "discordInfo": "Discord uses a Bot Token. Set DISCORD_BOT_TOKEN and DISCORD_WEBHOOK_URL in your .env file.",
+    "discordInfo": "Discord uses a Bot Token and Webhook URL. Add them on the Credentials page first.",
     "discordGuideTitle": "Connect Discord",
-    "discordGuideDesc": "Discord doesn't use OAuth. You need to connect via Bot Token. Add the following to your .env file in the project root:",
-    "discordGuidePath": "File location: project-root/.env",
+    "discordGuideDesc": "Save the Discord Bot Token and Webhook URL on the Credentials page first, then come back to connect in one click.",
+    "discordGuidePath": "Location: sidebar -> Credentials",
     "discordGuideOk": "Got it",
     "connecting": "Connecting {platform}",
     "linkedPosts": "{count} linked posts",
@@ -129,6 +130,15 @@
       "expired": "Expired",
       "misconfigured": "Needs config",
       "error": "Attention"
+    },
+    "configureCredentials": "Configure developer credentials first",
+    "credentialsReady": "Credentials are ready. You can connect now.",
+    "credentialsMissing": "Missing credentials",
+    "credentialsRequired": "{platform} credentials are missing. Add them in Credentials first.",
+    "credentialSource": {
+      "database": "Saved in app",
+      "environment": "From env",
+      "missing": "Needs setup"
     }
   },
   "platform": {
@@ -160,7 +170,8 @@
     "failedToDisconnect": "Failed to disconnect",
     "contentGenerated": "Content generated",
     "failedToConnect": "Failed to connect account",
-    "accountConnected": "{platform} account connected"
+    "accountConnected": "{platform} account connected",
+    "credentialsSaved": "{platform} credentials saved"
   },
   "status": {
     "draft": "Draft",
@@ -168,5 +179,35 @@
     "publishing": "Publishing",
     "published": "Published",
     "failed": "Failed"
+  },
+  "credentials": {
+    "title": "Platform credentials",
+    "description": "After users obtain developer credentials from each platform, they can paste them here directly with no .env editing. Account connection, token refresh, and publishing will use these saved credentials first.",
+    "callbackUrl": "OAuth callback URL",
+    "configured": "Configured",
+    "placeholder": "Enter a value and save",
+    "notConfigured": "This platform is not configured yet",
+    "updatedAt": "Last updated: {value}",
+    "source": {
+      "database": "Using credentials saved in the app",
+      "environment": "Using credentials from environment variables",
+      "missing": "No credentials configured yet"
+    },
+    "platformNames": {
+      "linkedin": "LinkedIn",
+      "twitter": "X / Twitter",
+      "facebook": "Facebook",
+      "discord": "Discord",
+      "reddit": "Reddit",
+      "youtube": "YouTube"
+    },
+    "help": {
+      "linkedin": "Create an app in LinkedIn Developer, then paste the Client ID and Client Secret here.",
+      "twitter": "Create an app in the X Developer Portal, then paste the API Key and API Secret here.",
+      "facebook": "Create an app in Meta for Developers and enable Facebook Login, then fill in the App ID and App Secret.",
+      "discord": "Create a Discord Bot and Webhook, then paste the Bot Token and Webhook URL here.",
+      "reddit": "Create an app in Reddit Apps, then fill in the Client ID and Client Secret here.",
+      "youtube": "Create an OAuth Client in Google Cloud Console, then paste the Client ID and Client Secret here."
+    }
   }
 }

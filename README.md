@@ -42,7 +42,8 @@ npm install
 
 # 2. 配置环境变量
 cp .env.example .env
-# 编辑 .env，填入你的 OAuth 凭证和加密密钥
+# 编辑 .env，至少填入 DATABASE_URL / REDIS_URL / ENCRYPTION_KEY / NEXT_PUBLIC_APP_URL
+# 第三方平台 OAuth 凭证现在支持在应用页面里直接填写，普通用户无需改 .env
 
 # 3. 启动数据库和 Redis
 docker compose up -d
@@ -64,21 +65,33 @@ npm run workers
 - `DATABASE_URL`：PostgreSQL 连接串，默认开发端口是 `5433`
 - `REDIS_URL`：Redis 连接串，默认开发端口是 `6380`
 - `ENCRYPTION_KEY`：64 位十六进制密钥，用于加密存储 OAuth token
-- `NEXT_PUBLIC_APP_URL`：站点公开地址，OAuth 回调和页面跳转都会用到
-- Discord 采用手动接入：
+- `NEXT_PUBLIC_APP_URL`：站点公开地址，OAuth 回调和页面跳转都会用到（仍需在 `.env` 中配置）
+- 第三方平台凭证推荐在应用内的“平台凭证”页面填写并保存到数据库
+- `.env` 中的以下平台凭证现在只作为兼容回退，不再要求普通用户手改：
   - `DISCORD_BOT_TOKEN`
   - `DISCORD_WEBHOOK_URL`
-- Twitter/X、YouTube、LinkedIn、Facebook、Reddit 走 OAuth，需要各自平台的 client id / secret
+  - `X_API_KEY`
+  - `X_API_SECRET`
+  - `LINKEDIN_CLIENT_ID`
+  - `LINKEDIN_CLIENT_SECRET`
+  - `FACEBOOK_APP_ID`
+  - `FACEBOOK_APP_SECRET`
+  - `REDDIT_CLIENT_ID`
+  - `REDDIT_CLIENT_SECRET`
+  - `YOUTUBE_CLIENT_ID`
+  - `YOUTUBE_CLIENT_SECRET`
 
 ## 账号接入说明
 
-- LinkedIn / Facebook / Reddit / Twitter / YouTube：在账号页点击连接，走 OAuth
-- Discord：先在 `.env` 中配置 `DISCORD_BOT_TOKEN` 和 `DISCORD_WEBHOOK_URL`，再在账号页点击连接完成落库
+- 先进入侧边栏的“平台凭证”页面，把用户从第三方平台拿到的开发凭证粘贴进去
+- LinkedIn / Facebook / Reddit / Twitter / YouTube：凭证保存后，在账号页点击连接，走 OAuth
+- Discord：先在“平台凭证”页面填写 `Bot Token` 和 `Webhook URL`，再在账号页点击连接完成落库
+- 平台凭证会优先从数据库读取，并用 `ENCRYPTION_KEY` 加密保存；`.env` 只作为兼容回退
 - 账号页会显示当前状态：
   - `正常`：可直接发布
   - `即将过期`：Token 快过期，系统会在调用时尝试自动刷新
   - `已过期`：当前不可发布，需要重新授权
-  - `待配置`：通常是 Discord 环境变量未配置完整
+  - `待配置`：当前平台开发凭证未配置完整，需先到“平台凭证”页面补齐
   - `需检查`：最近一次 refresh / 发布 / 拉取分析时出现错误
 
 ## 发布行为说明

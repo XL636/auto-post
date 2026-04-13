@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/shared/lib/prisma";
 import { getAccountHealth, getDefaultUserId } from "@/modules/accounts/account.service";
+import { listPlatformCredentialStatuses } from "@/modules/platform-credentials/credential.service";
 
 function getStatusLabel(status: ReturnType<typeof getAccountHealth>["status"]): string {
   switch (status) {
@@ -20,30 +21,39 @@ function getStatusLabel(status: ReturnType<typeof getAccountHealth>["status"]): 
 }
 
 export async function GET() {
-  const accounts = await prisma.account.findMany({
-    where: { userId: getDefaultUserId() },
-    select: {
-      id: true,
-      platform: true,
-      displayName: true,
-      avatarUrl: true,
-      tokenExpiresAt: true,
-      scopes: true,
-      createdAt: true,
-      lastError: true,
-      lastValidatedAt: true,
-      _count: {
-        select: {
-          posts: true,
+  const userId = getDefaultUserId();
+  const [accounts, credentialStatuses] = await Promise.all([
+    prisma.account.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        platform: true,
+        displayName: true,
+        avatarUrl: true,
+        tokenExpiresAt: true,
+        scopes: true,
+        createdAt: true,
+        lastError: true,
+        lastValidatedAt: true,
+        _count: {
+          select: {
+            posts: true,
+          },
         },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      orderBy: { createdAt: "desc" },
+    }),
+    listPlatformCredentialStatuses(userId),
+  ]);
+
+  const credentialStatusMap = new Map(
+    credentialStatuses.map((credentialStatus) => [credentialStatus.platform, credentialStatus.configured]),
+  );
 
   return NextResponse.json(
     accounts.map((account) => {
-      const health = getAccountHealth(account);
+      const hasCredentials = credentialStatusMap.get(account.platform) ?? true;
+      const health = getAccountHealth(account, hasCredentials);
 
       return {
         id: account.id,

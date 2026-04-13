@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.3] - 2026-04-13
+
+### Added — Phase 6: 用户自助平台凭证
+- 新增 `PlatformCredential` 数据模型与迁移，用于按平台保存用户自带开发凭证
+- 新增“平台凭证”设置页与 `/api/platform-credentials` API，支持在页面填写 LinkedIn / X / Facebook / Discord / Reddit / YouTube 凭证
+- 新增凭证状态展示：数据库 / 环境变量 / 未配置，以及 OAuth 回调地址提示
+- 新增账号状态测试，覆盖“缺少平台凭证 -> MISCONFIGURED” 场景
+
+### Changed
+- OAuth 和 Discord 接入改为优先读取数据库凭证，普通用户无需手改 `.env`
+- 账号页连接卡片改为先检查平台凭证；未配置时直接引导到凭证页
+- Sidebar、README 和中英文文案更新为“用户自助填写平台凭证”的产品流程
+- 平台 client 的 `getAuthUrl` 改为异步，以支持数据库凭证解析
+
+### Fixed
+- 修复 YouTube / Reddit / 其他 OAuth 平台在未配置 `.env` 时跳转出 `client_id=undefined` 的问题
+- 修复 Prisma schema 更新后旧 Prisma Client 未包含 `platformCredential` 导致 `/api/accounts`、`/api/platform-credentials` 500 的问题
+- 应用数据库迁移 `20260413023500_platform_credentials`
+
 ## [0.2.2] - 2026-04-13
 
 ### Added — Phase 5: 账号稳定性 + 发布守卫

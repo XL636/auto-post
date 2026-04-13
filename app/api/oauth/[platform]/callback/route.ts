@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Account, Platform } from "@prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { getPlatformClient } from "@/modules/platforms";
 import { encrypt } from "@/shared/lib/encryption";
-import type { Platform, Account } from "@prisma/client";
-import { getDefaultUserId, getLocalizedAccountsPath } from "@/modules/accounts/account.service";
+import {
+  getDefaultUserId,
+  getLocalizedAccountsPath,
+} from "@/modules/accounts/account.service";
 import { routing } from "@/i18n/routing";
 
 function getOAuthCookiePath(platform: string): string {
@@ -33,6 +36,28 @@ function clearOAuthCookies(response: NextResponse, platform: string): void {
   });
 }
 
+function createPlaceholderAccount(platform: Platform): Account {
+  const now = new Date();
+
+  return {
+    id: `${platform.toLowerCase()}-oauth`,
+    userId: getDefaultUserId(),
+    platform,
+    accessToken: "",
+    refreshToken: null,
+    platformUserId: "",
+    displayName: "",
+    avatarUrl: null,
+    tokenExpiresAt: null,
+    tokenType: null,
+    scopes: [],
+    lastError: null,
+    lastValidatedAt: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ platform: string }> },
@@ -54,7 +79,7 @@ export async function GET(
     return NextResponse.json({ error: "Invalid OAuth state" }, { status: 400 });
   }
 
-  const dummyAccount = { platform: platformKey, accessToken: "" } as Account;
+  const dummyAccount = createPlaceholderAccount(platformKey);
   const client = getPlatformClient(platformKey, dummyAccount);
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/oauth/${platform}/callback`;
 

@@ -1,13 +1,16 @@
 import type { TokenPair } from "@/shared/types";
+import { requirePlatformCredential } from "@/modules/platform-credentials/credential.service";
+import { getDefaultUserId } from "@/modules/accounts/account.service";
 
-export function getDiscordAuthUrl(): string {
-  return ""; // Discord uses Bot Token, no OAuth flow
+export async function getDiscordAuthUrl(): Promise<string> {
+  return "";
 }
 
-export async function handleDiscordCallback(): Promise<TokenPair> {
-  // Discord Bot Token is set via env, no callback needed
+export async function handleDiscordCallback(userId = getDefaultUserId()): Promise<TokenPair> {
+  const credentials = await requirePlatformCredential("DISCORD", userId);
+
   return {
-    accessToken: process.env.DISCORD_BOT_TOKEN!,
+    accessToken: credentials.botToken || "",
     scopes: ["bot"],
     tokenType: "bot",
   };

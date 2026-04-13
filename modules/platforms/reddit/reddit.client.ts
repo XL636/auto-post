@@ -1,48 +1,43 @@
 import type { Account } from "@prisma/client";
 import type { PlatformClient } from "../platform.interface";
 import type { PublishResult, AnalyticsData, UserProfile, TokenPair } from "@/shared/types";
-import { getRedditAuthUrl, handleRedditCallback } from "./reddit.auth";
+import { getRedditAuthUrl, handleRedditCallback, refreshRedditAccessToken } from "./reddit.auth";
 import { registerPlatform } from "../registry";
 import { toErrorMessage } from "@/shared/lib/error";
 import { redditConfig } from "./reddit.config";
+import { requirePlatformCredential } from "@/modules/platform-credentials/credential.service";
 
 const API_BASE = "https://oauth.reddit.com";
 
 export class RedditClient implements PlatformClient {
   constructor(private account: Account) {}
 
-  getAuthUrl(redirectUri: string): string {
-    return getRedditAuthUrl(redirectUri);
+  async getAuthUrl(redirectUri: string): Promise<string> {
+    const credentials = await requirePlatformCredential("REDDIT", this.account.userId);
+    return getRedditAuthUrl(redirectUri, credentials.clientId || "");
   }
 
-  handleCallback(code: string, redirectUri: string): Promise<TokenPair> {
-    return handleRedditCallback(code, redirectUri);
+  async handleCallback(code: string, redirectUri: string): Promise<TokenPair> {
+    const credentials = await requirePlatformCredential("REDDIT", this.account.userId);
+    return handleRedditCallback(
+      code,
+      redirectUri,
+      credentials.clientId || "",
+      credentials.clientSecret || "",
+    );
   }
 
   async refreshToken(): Promise<TokenPair> {
-    const auth = Buffer.from(
-      `${process.env.REDDIT_CLIENT_ID}:${process.env.REDDIT_CLIENT_SECRET}`,
-    ).toString("base64");
+    if (!this.account.refreshToken) {
+      throw new Error("No Reddit refresh token available. Re-authorization required.");
+    }
 
-    const res = await fetch("https://www.reddit.com/api/v1/access_token", {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        grant_type: "refresh_token",
-        refresh_token: this.account.refreshToken!,
-      }),
-    });
-    const data = await res.json();
-    return {
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token || this.account.refreshToken!,
-      expiresAt: new Date(Date.now() + data.expires_in * 1000),
-      scopes: (data.scope || "").split(" "),
-      tokenType: "bearer",
-    };
+    const credentials = await requirePlatformCredential("REDDIT", this.account.userId);
+    return refreshRedditAccessToken(
+      this.account.refreshToken,
+      credentials.clientId || "",
+      credentials.clientSecret || "",
+    );
   }
 
   async publish(content: string): Promise<PublishResult> {
@@ -92,7 +87,9 @@ export class RedditClient implements PlatformClient {
       });
       const data = await res.json();
       const post = data.data?.children?.[0]?.data;
-      if (!post) return { likes: 0, comments: 0, shares: 0, impressions: 0, clicks: 0 };
+      if (!post) {
+        return { likes: 0, comments: 0, shares: 0, impressions: 0, clicks: 0 };
+      }
       return {
         likes: post.ups || 0,
         comments: post.num_comments || 0,

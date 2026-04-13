@@ -54,15 +54,16 @@ export function getLocalizedAccountsPath(locale?: string | null): string {
   return locale ? `/${locale}/accounts` : "/accounts";
 }
 
-export function getAccountHealth(account: Pick<Account, "platform" | "tokenExpiresAt" | "lastError">): {
+export function getAccountHealth(
+  account: Pick<Account, "platform" | "tokenExpiresAt" | "lastError">,
+  hasCredentials = true,
+): {
   status: AccountHealthStatus;
   canPublish: boolean;
 } {
-  const discordMissingEnv =
-    account.platform === "DISCORD" &&
-    (!process.env.DISCORD_BOT_TOKEN || !process.env.DISCORD_WEBHOOK_URL);
+  const missingCredentials = !hasCredentials;
 
-  if (discordMissingEnv) {
+  if (missingCredentials) {
     return { status: "MISCONFIGURED", canPublish: false };
   }
 

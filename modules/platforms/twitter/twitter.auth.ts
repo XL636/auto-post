@@ -58,9 +58,8 @@ function takeStoredCodeVerifier(redirectUri: string): string | undefined {
   return entry.codeVerifier;
 }
 
-function getTwitterClientAuthHeader(): string {
-  const credentials = `${process.env.X_API_KEY ?? ""}:${process.env.X_API_SECRET ?? ""}`;
-  return `Basic ${Buffer.from(credentials).toString("base64")}`;
+function getTwitterClientAuthHeader(clientId: string, clientSecret: string): string {
+  return `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`;
 }
 
 function getTwitterOAuthError(data: unknown, fallback: string): string {
@@ -75,13 +74,7 @@ function getTwitterOAuthError(data: unknown, fallback: string): string {
     title?: string;
   };
 
-  return (
-    errorData.error_description ||
-    errorData.detail ||
-    errorData.title ||
-    errorData.error ||
-    fallback
-  );
+  return errorData.error_description || errorData.detail || errorData.title || errorData.error || fallback;
 }
 
 export interface TwitterAuthRequest {
@@ -90,7 +83,7 @@ export interface TwitterAuthRequest {
   state: string;
 }
 
-export function createTwitterAuthRequest(redirectUri: string): TwitterAuthRequest {
+export function createTwitterAuthRequest(redirectUri: string, clientId: string): TwitterAuthRequest {
   const codeVerifier = createCodeVerifier();
   const codeChallenge = createCodeChallenge(codeVerifier);
   const state = createState();
@@ -99,7 +92,7 @@ export function createTwitterAuthRequest(redirectUri: string): TwitterAuthReques
 
   const params = new URLSearchParams({
     response_type: "code",
-    client_id: process.env.X_API_KEY!,
+    client_id: clientId,
     redirect_uri: redirectUri,
     scope: TWITTER_SCOPES.join(" "),
     state,
@@ -114,13 +107,15 @@ export function createTwitterAuthRequest(redirectUri: string): TwitterAuthReques
   };
 }
 
-export function getTwitterAuthUrl(redirectUri: string): string {
-  return createTwitterAuthRequest(redirectUri).url;
+export function getTwitterAuthUrl(redirectUri: string, clientId: string): string {
+  return createTwitterAuthRequest(redirectUri, clientId).url;
 }
 
 export async function handleTwitterCallback(
   code: string,
   redirectUri: string,
+  clientId: string,
+  clientSecret: string,
   codeVerifier?: string,
 ): Promise<TokenPair> {
   const resolvedCodeVerifier = codeVerifier ?? takeStoredCodeVerifier(redirectUri);
@@ -132,7 +127,7 @@ export async function handleTwitterCallback(
   const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: {
-      Authorization: getTwitterClientAuthHeader(),
+      Authorization: getTwitterClientAuthHeader(clientId, clientSecret),
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
@@ -140,7 +135,7 @@ export async function handleTwitterCallback(
       code,
       redirect_uri: redirectUri,
       code_verifier: resolvedCodeVerifier,
-      client_id: process.env.X_API_KEY!,
+      client_id: clientId,
     }),
   });
 
@@ -159,17 +154,21 @@ export async function handleTwitterCallback(
   };
 }
 
-export async function refreshTwitterToken(refreshToken: string): Promise<TokenPair> {
+export async function refreshTwitterToken(
+  refreshToken: string,
+  clientId: string,
+  clientSecret: string,
+): Promise<TokenPair> {
   const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: {
-      Authorization: getTwitterClientAuthHeader(),
+      Authorization: getTwitterClientAuthHeader(clientId, clientSecret),
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
       grant_type: "refresh_token",
       refresh_token: refreshToken,
-      client_id: process.env.X_API_KEY!,
+      client_id: clientId,
     }),
   });
 

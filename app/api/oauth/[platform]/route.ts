@@ -1,8 +1,11 @@
 import { randomBytes } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import type { Account, Platform } from "@prisma/client";
 import { getPlatformClient } from "@/modules/platforms";
-import type { Platform, Account } from "@prisma/client";
-import { getLocalizedAccountsPath } from "@/modules/accounts/account.service";
+import {
+  getDefaultUserId,
+  getLocalizedAccountsPath,
+} from "@/modules/accounts/account.service";
 import { routing } from "@/i18n/routing";
 
 function getOAuthCookiePath(platform: string): string {
@@ -13,14 +16,35 @@ function isAppLocale(value: string | null | undefined): value is (typeof routing
   return Boolean(value && routing.locales.includes(value as (typeof routing.locales)[number]));
 }
 
+function createPlaceholderAccount(platform: Platform): Account {
+  const now = new Date();
+
+  return {
+    id: `${platform.toLowerCase()}-oauth`,
+    userId: getDefaultUserId(),
+    platform,
+    accessToken: "",
+    refreshToken: null,
+    platformUserId: "",
+    displayName: "",
+    avatarUrl: null,
+    tokenExpiresAt: null,
+    tokenType: null,
+    scopes: [],
+    lastError: null,
+    lastValidatedAt: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ platform: string }> },
 ) {
   const { platform } = await params;
   const platformKey = platform.toUpperCase() as Platform;
-  const dummyAccount = { platform: platformKey, accessToken: "" } as Account;
-  const client = getPlatformClient(platformKey, dummyAccount);
+  const client = getPlatformClient(platformKey, createPlaceholderAccount(platformKey));
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/oauth/${platform}/callback`;
   const locale = request.nextUrl.searchParams.get("locale");
 
@@ -30,13 +54,26 @@ export async function GET(
     );
   }
 
-  const url = client.getAuthUrl(redirectUri);
+  let url: string;
+
+  try {
+    url = await client.getAuthUrl(redirectUri);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Platform credentials are not configured." },
+      { status: 400 },
+    );
+  }
+
   if (!url) {
     return NextResponse.json({ error: "Platform does not use OAuth" }, { status: 400 });
   }
 
   const state = randomBytes(24).toString("hex");
-  const response = NextResponse.redirect(new URL(url));
+  const redirectUrl = new URL(url);
+  redirectUrl.searchParams.set("state", state);
+
+  const response = NextResponse.redirect(redirectUrl);
   const cookiePath = getOAuthCookiePath(platform);
   const safeLocale = isAppLocale(locale) ? locale : routing.defaultLocale;
 
@@ -54,15 +91,6 @@ export async function GET(
     maxAge: 10 * 60,
     path: cookiePath,
   });
-
-  response.headers.set(
-    "Location",
-    (() => {
-      const redirectUrl = new URL(url);
-      redirectUrl.searchParams.set("state", state);
-      return redirectUrl.toString();
-    })(),
-  );
 
   return response;
 }

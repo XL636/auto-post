@@ -5,23 +5,39 @@ import { getYouTubeAuthUrl, handleYouTubeCallback, refreshYouTubeAccessToken } f
 import { registerPlatform } from "../registry";
 import { toErrorMessage } from "@/shared/lib/error";
 import { youtubeConfig } from "./youtube.config";
+import { requirePlatformCredential } from "@/modules/platform-credentials/credential.service";
 
 const API_BASE = "https://www.googleapis.com/youtube/v3";
 
 export class YouTubeClient implements PlatformClient {
   constructor(private account: Account) {}
 
-  getAuthUrl(redirectUri: string): string {
-    return getYouTubeAuthUrl(redirectUri);
+  async getAuthUrl(redirectUri: string): Promise<string> {
+    const credentials = await requirePlatformCredential("YOUTUBE", this.account.userId);
+    return getYouTubeAuthUrl(redirectUri, credentials.clientId || "");
   }
 
-  handleCallback(code: string, redirectUri: string): Promise<TokenPair> {
-    return handleYouTubeCallback(code, redirectUri);
+  async handleCallback(code: string, redirectUri: string): Promise<TokenPair> {
+    const credentials = await requirePlatformCredential("YOUTUBE", this.account.userId);
+    return handleYouTubeCallback(
+      code,
+      redirectUri,
+      credentials.clientId || "",
+      credentials.clientSecret || "",
+    );
   }
 
   async refreshToken(): Promise<TokenPair> {
-    if (!this.account.refreshToken) throw new Error("No refresh token available");
-    return refreshYouTubeAccessToken(this.account.refreshToken);
+    if (!this.account.refreshToken) {
+      throw new Error("No refresh token available");
+    }
+
+    const credentials = await requirePlatformCredential("YOUTUBE", this.account.userId);
+    return refreshYouTubeAccessToken(
+      this.account.refreshToken,
+      credentials.clientId || "",
+      credentials.clientSecret || "",
+    );
   }
 
   async publish(content: string): Promise<PublishResult> {
@@ -38,7 +54,9 @@ export class YouTubeClient implements PlatformClient {
         }),
       });
       const data = await res.json();
-      if (!res.ok) return { success: false, error: data.error?.message || "YouTube publish failed" };
+      if (!res.ok) {
+        return { success: false, error: data.error?.message || "YouTube publish failed" };
+      }
       return { success: true, platformPostId: data.id };
     } catch (error) {
       return { success: false, error: toErrorMessage(error, "Publish failed") };
@@ -54,10 +72,14 @@ export class YouTubeClient implements PlatformClient {
       const res = await fetch(`${API_BASE}/videos?part=statistics&id=${platformPostId}`, {
         headers: { Authorization: `Bearer ${this.account.accessToken}` },
       });
-      if (!res.ok) return { likes: 0, comments: 0, shares: 0, impressions: 0, clicks: 0 };
+      if (!res.ok) {
+        return { likes: 0, comments: 0, shares: 0, impressions: 0, clicks: 0 };
+      }
       const data = await res.json();
       const stats = data.items?.[0]?.statistics;
-      if (!stats) return { likes: 0, comments: 0, shares: 0, impressions: 0, clicks: 0 };
+      if (!stats) {
+        return { likes: 0, comments: 0, shares: 0, impressions: 0, clicks: 0 };
+      }
       return {
         likes: parseInt(stats.likeCount || "0", 10),
         comments: parseInt(stats.commentCount || "0", 10),

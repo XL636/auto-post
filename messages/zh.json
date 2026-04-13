@@ -9,7 +9,8 @@
     "drafts": "草稿",
     "calendar": "日历",
     "analytics": "数据分析",
-    "accounts": "账号"
+    "accounts": "账号",
+    "credentials": "平台凭证"
   },
   "lang": {
     "zh": "中文",
@@ -105,7 +106,7 @@
   },
   "accounts": {
     "title": "账号",
-    "description": "管理已连接的社交媒体账号",
+    "description": "管理已连接账号，并先为每个平台配置开发凭证",
     "connect": "连接平台",
     "connected": "已连接的账号",
     "noAccounts": "还没有连接任何账号。",
@@ -113,10 +114,10 @@
     "confirmDisconnect": "确定要断开这个账号吗？",
     "connectedAt": "连接于",
     "tokenExpires": "Token 过期于",
-    "discordInfo": "Discord 使用 Bot Token，请在 .env 文件中设置 DISCORD_BOT_TOKEN 和 DISCORD_WEBHOOK_URL。",
+    "discordInfo": "Discord 使用 Bot Token 和 Webhook URL，请先在平台凭证页面填写。",
     "discordGuideTitle": "连接 Discord",
-    "discordGuideDesc": "Discord 不使用 OAuth 登录，需要通过 Bot Token 连接。请在项目根目录的 .env 文件中添加以下配置：",
-    "discordGuidePath": "文件位置：项目根目录/.env",
+    "discordGuideDesc": "先在平台凭证页面保存 Discord Bot Token 和 Webhook URL，再回来一键连接。",
+    "discordGuidePath": "文件位置：侧边栏 -> 平台凭证",
     "discordGuideOk": "知道了",
     "connecting": "正在连接 {platform}",
     "linkedPosts": "已关联 {count} 条帖子",
@@ -129,6 +130,15 @@
       "expired": "已过期",
       "misconfigured": "待配置",
       "error": "需检查"
+    },
+    "configureCredentials": "先配置开发凭证",
+    "credentialsReady": "凭证已就绪，可以开始连接",
+    "credentialsMissing": "未配置",
+    "credentialsRequired": "{platform} 还没配置开发凭证，先去凭证页填一下。",
+    "credentialSource": {
+      "database": "已保存",
+      "environment": "来自环境变量",
+      "missing": "待配置"
     }
   },
   "platform": {
@@ -160,7 +170,8 @@
     "failedToDisconnect": "断开连接失败",
     "contentGenerated": "内容已生成",
     "failedToConnect": "连接账号失败",
-    "accountConnected": "{platform} 账号已连接"
+    "accountConnected": "{platform} 账号已连接",
+    "credentialsSaved": "{platform} 凭证已保存"
   },
   "status": {
     "draft": "草稿",
@@ -168,5 +179,35 @@
     "publishing": "发布中",
     "published": "已发布",
     "failed": "失败"
+  },
+  "credentials": {
+    "title": "平台开发凭证",
+    "description": "用户从各个平台拿到开发凭证后，直接在这里粘贴即可，无需改 .env。后续账号连接、刷新 Token 和发帖都会优先使用这里保存的凭证。",
+    "callbackUrl": "OAuth 回调地址",
+    "configured": "已配置",
+    "placeholder": "输入后点击保存",
+    "notConfigured": "这个平台还没配置凭证",
+    "updatedAt": "最近更新：{value}",
+    "source": {
+      "database": "当前使用应用内保存的凭证",
+      "environment": "当前使用环境变量里的凭证",
+      "missing": "当前还没配置凭证"
+    },
+    "platformNames": {
+      "linkedin": "LinkedIn",
+      "twitter": "X / Twitter",
+      "facebook": "Facebook",
+      "discord": "Discord",
+      "reddit": "Reddit",
+      "youtube": "YouTube"
+    },
+    "help": {
+      "linkedin": "去 LinkedIn Developer 创建应用后，把 Client ID 和 Client Secret 粘贴到这里。",
+      "twitter": "去 X Developer Portal 创建应用后，把 API Key 和 API Secret 粘贴到这里。",
+      "facebook": "去 Meta for Developers 创建应用并开启 Facebook Login 后，填写 App ID 和 App Secret。",
+      "discord": "创建 Discord Bot 和 Webhook 后，把 Bot Token 与 Webhook URL 填到这里。",
+      "reddit": "去 Reddit Apps 创建应用后，把 Client ID 和 Client Secret 填到这里。",
+      "youtube": "去 Google Cloud Console 创建 OAuth Client 后，把 Client ID 和 Client Secret 填到这里。"
+    }
   }
 }

@@ -1,7 +1,7 @@
 import type { TokenPair, PublishResult, AnalyticsData, UserProfile } from "@/shared/types";
 
 export interface PlatformClient {
-  getAuthUrl(redirectUri: string): string;
+  getAuthUrl(redirectUri: string): Promise<string>;
   handleCallback(code: string, redirectUri: string): Promise<TokenPair>;
   refreshToken(token?: string): Promise<TokenPair>;
 

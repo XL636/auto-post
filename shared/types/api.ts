@@ -77,3 +77,33 @@ export interface AnalyticsOverview {
 }
 
 export type CalendarData = Record<string, PostListItem[]>;
+
+export type PlatformCredentialFieldKey =
+  | "clientId"
+  | "clientSecret"
+  | "botToken"
+  | "webhookUrl";
+
+export interface PlatformCredentialFieldDefinition {
+  key: PlatformCredentialFieldKey;
+  label: string;
+  secret: boolean;
+}
+
+export interface PlatformCredentialStatus {
+  platform: Platform;
+  configured: boolean;
+  source: "database" | "environment" | "missing";
+  fields: PlatformCredentialFieldDefinition[];
+  callbackUrl: string | null;
+  configuredValues: Partial<Record<PlatformCredentialFieldKey, string | null>>;
+  updatedAt: string | null;
+}
+
+export interface SavePlatformCredentialInput {
+  platform: Platform;
+  clientId?: string;
+  clientSecret?: string;
+  botToken?: string;
+  webhookUrl?: string;
+}

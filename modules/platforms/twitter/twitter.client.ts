@@ -4,6 +4,7 @@ import type { PublishResult, AnalyticsData, UserProfile, TokenPair } from "@/sha
 import { registerPlatform } from "../registry";
 import { twitterConfig } from "./twitter.config";
 import { getTwitterAuthUrl, handleTwitterCallback, refreshTwitterToken } from "./twitter.auth";
+import { requirePlatformCredential } from "@/modules/platform-credentials/credential.service";
 
 const API_BASE = "https://api.twitter.com/2";
 
@@ -18,23 +19,25 @@ function getTwitterError(data: unknown, fallback: string): string {
     errors?: Array<{ message?: string }>;
   };
 
-  return (
-    errorData.detail ||
-    errorData.title ||
-    errorData.errors?.[0]?.message ||
-    fallback
-  );
+  return errorData.detail || errorData.title || errorData.errors?.[0]?.message || fallback;
 }
 
 export class TwitterClient implements PlatformClient {
   constructor(private account: Account) {}
 
-  getAuthUrl(redirectUri: string): string {
-    return getTwitterAuthUrl(redirectUri);
+  async getAuthUrl(redirectUri: string): Promise<string> {
+    const credentials = await requirePlatformCredential("TWITTER", this.account.userId);
+    return getTwitterAuthUrl(redirectUri, credentials.clientId || "");
   }
 
-  handleCallback(code: string, redirectUri: string): Promise<TokenPair> {
-    return handleTwitterCallback(code, redirectUri);
+  async handleCallback(code: string, redirectUri: string): Promise<TokenPair> {
+    const credentials = await requirePlatformCredential("TWITTER", this.account.userId);
+    return handleTwitterCallback(
+      code,
+      redirectUri,
+      credentials.clientId || "",
+      credentials.clientSecret || "",
+    );
   }
 
   async refreshToken(token?: string): Promise<TokenPair> {
@@ -44,7 +47,8 @@ export class TwitterClient implements PlatformClient {
       throw new Error("No Twitter refresh token available. Re-authorization required.");
     }
 
-    return refreshTwitterToken(refreshToken);
+    const credentials = await requirePlatformCredential("TWITTER", this.account.userId);
+    return refreshTwitterToken(refreshToken, credentials.clientId || "", credentials.clientSecret || "");
   }
 
   async publish(content: string, mediaUrls: string[] = []): Promise<PublishResult> {

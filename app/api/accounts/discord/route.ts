@@ -2,20 +2,24 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/shared/lib/prisma";
 import { encrypt } from "@/shared/lib/encryption";
 import { getDefaultUserId } from "@/modules/accounts/account.service";
+import { requirePlatformCredential } from "@/modules/platform-credentials/credential.service";
 
 export async function POST() {
-  const botToken = process.env.DISCORD_BOT_TOKEN;
-  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  let credentials;
 
-  if (!botToken || !webhookUrl) {
+  try {
+    credentials = await requirePlatformCredential("DISCORD", getDefaultUserId());
+  } catch (error) {
     return NextResponse.json(
-      { error: "DISCORD_BOT_TOKEN and DISCORD_WEBHOOK_URL must be configured first." },
+      { error: error instanceof Error ? error.message : "Discord credentials are not configured." },
       { status: 400 },
     );
   }
 
   const encryptionKey = process.env.ENCRYPTION_KEY;
-  const accessToken = encryptionKey ? encrypt(botToken, encryptionKey) : botToken;
+  const accessToken = encryptionKey
+    ? encrypt(credentials.botToken || "", encryptionKey)
+    : credentials.botToken || "";
 
   const account = await prisma.account.upsert({
     where: {

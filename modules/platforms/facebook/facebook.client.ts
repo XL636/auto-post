@@ -5,23 +5,32 @@ import { getFacebookAuthUrl, handleFacebookCallback } from "./facebook.auth";
 import { registerPlatform } from "../registry";
 import { toErrorMessage } from "@/shared/lib/error";
 import { facebookConfig } from "./facebook.config";
+import { requirePlatformCredential } from "@/modules/platform-credentials/credential.service";
 
 const GRAPH_API = "https://graph.facebook.com/v21.0";
 
 export class FacebookClient implements PlatformClient {
   constructor(private account: Account) {}
 
-  getAuthUrl(redirectUri: string): string {
-    return getFacebookAuthUrl(redirectUri);
+  async getAuthUrl(redirectUri: string): Promise<string> {
+    const credentials = await requirePlatformCredential("FACEBOOK", this.account.userId);
+    return getFacebookAuthUrl(redirectUri, credentials.clientId || "");
   }
 
-  handleCallback(code: string, redirectUri: string): Promise<TokenPair> {
-    return handleFacebookCallback(code, redirectUri);
+  async handleCallback(code: string, redirectUri: string): Promise<TokenPair> {
+    const credentials = await requirePlatformCredential("FACEBOOK", this.account.userId);
+    return handleFacebookCallback(
+      code,
+      redirectUri,
+      credentials.clientId || "",
+      credentials.clientSecret || "",
+    );
   }
 
   async refreshToken(): Promise<TokenPair> {
+    const credentials = await requirePlatformCredential("FACEBOOK", this.account.userId);
     const res = await fetch(
-      `${GRAPH_API}/oauth/access_token?grant_type=fb_exchange_token&client_id=${process.env.FACEBOOK_APP_ID}&client_secret=${process.env.FACEBOOK_APP_SECRET}&fb_exchange_token=${this.account.accessToken}`,
+      `${GRAPH_API}/oauth/access_token?grant_type=fb_exchange_token&client_id=${credentials.clientId}&client_secret=${credentials.clientSecret}&fb_exchange_token=${this.account.accessToken}`,
     );
     const data = await res.json();
     return {
@@ -43,7 +52,9 @@ export class FacebookClient implements PlatformClient {
         }),
       });
       const data = await res.json();
-      if (data.error) return { success: false, error: data.error.message };
+      if (data.error) {
+        return { success: false, error: data.error.message };
+      }
       return { success: true, platformPostId: data.id };
     } catch (error) {
       return { success: false, error: toErrorMessage(error, "Publish failed") };

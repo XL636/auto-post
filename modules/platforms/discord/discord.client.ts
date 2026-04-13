@@ -4,17 +4,19 @@ import type { PublishResult, AnalyticsData, UserProfile, TokenPair } from "@/sha
 import { registerPlatform } from "../registry";
 import { toErrorMessage } from "@/shared/lib/error";
 import { discordConfig } from "./discord.config";
+import { requirePlatformCredential } from "@/modules/platform-credentials/credential.service";
 
 export class DiscordClient implements PlatformClient {
   constructor(private account: Account) {}
 
-  getAuthUrl(): string {
+  async getAuthUrl(_redirectUri: string): Promise<string> {
     return "";
   }
 
   async handleCallback(): Promise<TokenPair> {
+    const credentials = await requirePlatformCredential("DISCORD", this.account.userId);
     return {
-      accessToken: process.env.DISCORD_BOT_TOKEN!,
+      accessToken: credentials.botToken || "",
       scopes: ["bot"],
       tokenType: "bot",
     };
@@ -26,8 +28,11 @@ export class DiscordClient implements PlatformClient {
 
   async publish(content: string): Promise<PublishResult> {
     try {
-      const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
-      if (!webhookUrl) return { success: false, error: "DISCORD_WEBHOOK_URL not configured" };
+      const credentials = await requirePlatformCredential("DISCORD", this.account.userId);
+      const webhookUrl = credentials.webhookUrl;
+      if (!webhookUrl) {
+        return { success: false, error: "Discord webhook URL not configured" };
+      }
 
       const res = await fetch(`${webhookUrl}?wait=true`, {
         method: "POST",
@@ -35,7 +40,9 @@ export class DiscordClient implements PlatformClient {
         body: JSON.stringify({ content }),
       });
       const data = await res.json();
-      if (!res.ok) return { success: false, error: data.message || "Discord post failed" };
+      if (!res.ok) {
+        return { success: false, error: data.message || "Discord post failed" };
+      }
       if (!data.channel_id || !data.id) {
         return { success: false, error: "Discord webhook response missing channel_id or message id" };
       }
@@ -46,7 +53,8 @@ export class DiscordClient implements PlatformClient {
   }
 
   async deletePost(platformPostId: string): Promise<void> {
-    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+    const credentials = await requirePlatformCredential("DISCORD", this.account.userId);
+    const webhookUrl = credentials.webhookUrl;
     if (webhookUrl) {
       const messageId = platformPostId.includes("/") ? platformPostId.split("/")[1] : platformPostId;
       await fetch(`${webhookUrl}/messages/${messageId}`, { method: "DELETE" });
@@ -55,13 +63,14 @@ export class DiscordClient implements PlatformClient {
 
   async getAnalytics(platformPostId: string): Promise<AnalyticsData> {
     try {
+      const credentials = await requirePlatformCredential("DISCORD", this.account.userId);
       const [channelId, messageId] = platformPostId.split("/");
-      if (!channelId || !messageId) {
+      if (!channelId || !messageId || !credentials.botToken) {
         return { likes: 0, comments: 0, shares: 0, impressions: 0, clicks: 0 };
       }
 
       const res = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages/${messageId}`, {
-        headers: { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}` },
+        headers: { Authorization: `Bot ${credentials.botToken}` },
       });
 
       if (!res.ok) {
@@ -70,7 +79,7 @@ export class DiscordClient implements PlatformClient {
 
       const message = await res.json();
       const totalReactions = (message.reactions || []).reduce(
-        (sum: number, r: { count?: number }) => sum + (r.count || 0),
+        (sum: number, reaction: { count?: number }) => sum + (reaction.count || 0),
         0,
       );
 
