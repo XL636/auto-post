@@ -1,7 +1,7 @@
 import useSWR from "swr";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+import { fetchJson } from "@/shared/lib/fetcher";
+import type { AccountListItem } from "@/shared/types/api";
 
 export function useAccounts() {
-  return useSWR("/api/accounts", fetcher);
+  return useSWR<AccountListItem[]>("/api/accounts", fetchJson);
 }

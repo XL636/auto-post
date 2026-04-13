@@ -1,15 +1,58 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/shared/lib/prisma";
 import { getPlatformClient } from "@/modules/platforms";
 import { encrypt } from "@/shared/lib/encryption";
 import type { Platform, Account } from "@prisma/client";
+import { getDefaultUserId, getLocalizedAccountsPath } from "@/modules/accounts/account.service";
+import { routing } from "@/i18n/routing";
 
-export async function GET(req: Request, { params }: { params: Promise<{ platform: string }> }) {
+function getOAuthCookiePath(platform: string): string {
+  return `/api/oauth/${platform}`;
+}
+
+function isAppLocale(value: string | null | undefined): value is (typeof routing.locales)[number] {
+  return Boolean(value && routing.locales.includes(value as (typeof routing.locales)[number]));
+}
+
+function clearOAuthCookies(response: NextResponse, platform: string): void {
+  const cookiePath = getOAuthCookiePath(platform);
+
+  response.cookies.set(`${platform}_oauth_state`, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 0,
+    path: cookiePath,
+  });
+  response.cookies.set(`${platform}_oauth_locale`, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 0,
+    path: cookiePath,
+  });
+}
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ platform: string }> },
+) {
   const { platform } = await params;
   const platformKey = platform.toUpperCase() as Platform;
-  const { searchParams } = new URL(req.url);
+  const { searchParams } = req.nextUrl;
   const code = searchParams.get("code");
-  if (!code) return NextResponse.json({ error: "No code" }, { status: 400 });
+  const state = searchParams.get("state");
+  const expectedState = req.cookies.get(`${platform}_oauth_state`)?.value;
+  const localeCookie = req.cookies.get(`${platform}_oauth_locale`)?.value;
+  const locale = isAppLocale(localeCookie) ? localeCookie : routing.defaultLocale;
+
+  if (!code) {
+    return NextResponse.json({ error: "No code" }, { status: 400 });
+  }
+
+  if (!state || !expectedState || state !== expectedState) {
+    return NextResponse.json({ error: "Invalid OAuth state" }, { status: 400 });
+  }
 
   const dummyAccount = { platform: platformKey, accessToken: "" } as Account;
   const client = getPlatformClient(platformKey, dummyAccount);
@@ -26,7 +69,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ platform
   await prisma.account.upsert({
     where: {
       userId_platform_platformUserId: {
-        userId: "default",
+        userId: getDefaultUserId(),
         platform: platformKey,
         platformUserId: profile.platformUserId,
       },
@@ -39,8 +82,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ platform
       scopes: tokens.scopes,
       displayName: profile.displayName,
       avatarUrl: profile.avatarUrl,
+      lastError: null,
+      lastValidatedAt: new Date(),
     },
     create: {
+      userId: getDefaultUserId(),
       platform: platformKey,
       platformUserId: profile.platformUserId,
       accessToken: encrypt(tokens.accessToken, encryptionKey),
@@ -50,8 +96,17 @@ export async function GET(req: Request, { params }: { params: Promise<{ platform
       scopes: tokens.scopes,
       displayName: profile.displayName,
       avatarUrl: profile.avatarUrl || "",
+      lastError: null,
+      lastValidatedAt: new Date(),
     },
   });
 
-  return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/accounts?connected=${platform}`);
+  const response = NextResponse.redirect(
+    new URL(
+      `${getLocalizedAccountsPath(locale)}?connected=${platform}`,
+      process.env.NEXT_PUBLIC_APP_URL,
+    ),
+  );
+  clearOAuthCookies(response, platform);
+  return response;
 }

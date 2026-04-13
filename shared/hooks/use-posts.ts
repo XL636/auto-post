@@ -1,16 +1,16 @@
 import useSWR from "swr";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+import { fetchJson } from "@/shared/lib/fetcher";
+import type { PostListItem } from "@/shared/types/api";
 
 export function usePosts(status?: string) {
   const params = status ? `?status=${status}` : "";
-  return useSWR(`/api/posts${params}`, fetcher);
+  return useSWR<PostListItem[]>(`/api/posts${params}`, fetchJson);
 }
 
 export function usePost(id: string) {
-  return useSWR(`/api/posts/${id}`, fetcher);
+  return useSWR<PostListItem>(`/api/posts/${id}`, fetchJson);
 }
 
 export function useDrafts() {
-  return useSWR("/api/posts?status=DRAFT", fetcher);
+  return useSWR<PostListItem[]>("/api/posts?status=DRAFT", fetchJson);
 }

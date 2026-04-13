@@ -3,6 +3,7 @@ import type { PlatformClient } from "../platform.interface";
 import type { PublishResult, AnalyticsData, UserProfile, TokenPair } from "@/shared/types";
 import { getFacebookAuthUrl, handleFacebookCallback } from "./facebook.auth";
 import { registerPlatform } from "../registry";
+import { toErrorMessage } from "@/shared/lib/error";
 import { facebookConfig } from "./facebook.config";
 
 const GRAPH_API = "https://graph.facebook.com/v21.0";
@@ -44,8 +45,8 @@ export class FacebookClient implements PlatformClient {
       const data = await res.json();
       if (data.error) return { success: false, error: data.error.message };
       return { success: true, platformPostId: data.id };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: toErrorMessage(error, "Publish failed") };
     }
   }
 

@@ -18,3 +18,7 @@ export const analyticsSyncQueue = new Queue("analytics-sync-queue", {
     removeOnComplete: { count: 100 },
   },
 });
+
+export async function initAnalyticsSyncSchedule() {
+  await analyticsSyncQueue.add("sync-analytics", {}, { repeat: { every: 60 * 60 * 1000 } });
+}

@@ -3,13 +3,16 @@ import type { TokenPair } from "@/shared/types";
 const AUTHORIZE_URL = "https://www.linkedin.com/oauth/v2/authorization";
 const TOKEN_URL = "https://www.linkedin.com/oauth/v2/accessToken";
 
-export function getLinkedInAuthUrl(redirectUri: string): string {
+export function getLinkedInAuthUrl(redirectUri: string, state?: string): string {
   const params = new URLSearchParams({
     response_type: "code",
     client_id: process.env.LINKEDIN_CLIENT_ID!,
     redirect_uri: redirectUri,
     scope: "openid profile w_member_social",
   });
+  if (state) {
+    params.set("state", state);
+  }
   return `${AUTHORIZE_URL}?${params}`;
 }
 

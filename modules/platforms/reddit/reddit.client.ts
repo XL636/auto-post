@@ -3,6 +3,7 @@ import type { PlatformClient } from "../platform.interface";
 import type { PublishResult, AnalyticsData, UserProfile, TokenPair } from "@/shared/types";
 import { getRedditAuthUrl, handleRedditCallback } from "./reddit.auth";
 import { registerPlatform } from "../registry";
+import { toErrorMessage } from "@/shared/lib/error";
 import { redditConfig } from "./reddit.config";
 
 const API_BASE = "https://oauth.reddit.com";
@@ -65,8 +66,8 @@ export class RedditClient implements PlatformClient {
         return { success: false, error: data.json.errors[0].join(": ") };
       }
       return { success: true, platformPostId: data.json?.data?.name };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: toErrorMessage(error, "Publish failed") };
     }
   }
 

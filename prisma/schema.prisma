@@ -37,6 +37,8 @@ model Account {
   tokenExpiresAt DateTime?
   tokenType      String?
   scopes         String[]
+  lastError      String?
+  lastValidatedAt DateTime?
   posts          PostPlatform[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt

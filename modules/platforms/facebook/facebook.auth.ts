@@ -3,13 +3,16 @@ import type { TokenPair } from "@/shared/types";
 const AUTHORIZE_URL = "https://www.facebook.com/v21.0/dialog/oauth";
 const TOKEN_URL = "https://graph.facebook.com/v21.0/oauth/access_token";
 
-export function getFacebookAuthUrl(redirectUri: string): string {
+export function getFacebookAuthUrl(redirectUri: string, state?: string): string {
   const params = new URLSearchParams({
     client_id: process.env.FACEBOOK_APP_ID!,
     redirect_uri: redirectUri,
     scope: "pages_manage_posts,pages_read_engagement",
     response_type: "code",
   });
+  if (state) {
+    params.set("state", state);
+  }
   return `${AUTHORIZE_URL}?${params}`;
 }
 

@@ -3,15 +3,17 @@ import type { TokenPair } from "@/shared/types";
 const AUTHORIZE_URL = "https://www.reddit.com/api/v1/authorize";
 const TOKEN_URL = "https://www.reddit.com/api/v1/access_token";
 
-export function getRedditAuthUrl(redirectUri: string): string {
+export function getRedditAuthUrl(redirectUri: string, state?: string): string {
   const params = new URLSearchParams({
     client_id: process.env.REDDIT_CLIENT_ID!,
     response_type: "code",
-    state: Math.random().toString(36).substring(7),
     redirect_uri: redirectUri,
     duration: "permanent",
     scope: "submit read identity",
   });
+  if (state) {
+    params.set("state", state);
+  }
   return `${AUTHORIZE_URL}?${params}`;
 }
 

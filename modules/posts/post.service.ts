@@ -1,4 +1,5 @@
 import { prisma } from "@/shared/lib/prisma";
+import { getAuthorizedPlatformClient } from "@/modules/accounts/account.service";
 import type { Post, PostStatus } from "@prisma/client";
 import type { CreatePostInput, UpdatePostInput, PostFilters } from "./types";
 
@@ -68,6 +69,23 @@ export const postService = {
   },
 
   async remove(id: string): Promise<void> {
+    const post = await prisma.post.findUnique({
+      where: { id },
+      include: { platforms: { include: { account: true } } },
+    });
+    if (post) {
+      await Promise.all(
+        post.platforms.map(async (pp) => {
+          if (!pp.platformPostId || pp.status !== "PUBLISHED") return;
+          try {
+            const { client } = await getAuthorizedPlatformClient(pp.account);
+            await client.deletePost(pp.platformPostId);
+          } catch (error) {
+            console.error(`Failed to delete from ${pp.account.platform}:`, error);
+          }
+        }),
+      );
+    }
     await prisma.post.delete({ where: { id } });
   },
 

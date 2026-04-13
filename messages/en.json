@@ -1,0 +1,172 @@
+{
+  "app": {
+    "title": "Auto Post Web",
+    "description": "Self-hosted social media scheduler"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "posts": "Posts",
+    "drafts": "Drafts",
+    "calendar": "Calendar",
+    "analytics": "Analytics",
+    "accounts": "Accounts"
+  },
+  "lang": {
+    "zh": "中文",
+    "en": "English"
+  },
+  "common": {
+    "loading": "Loading...",
+    "characters": "{count} characters",
+    "noData": "No data",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "publish": "Publish",
+    "publishing": "Publishing...",
+    "confirm": "Confirm",
+    "selected": "{count} selected",
+    "clear": "Clear",
+    "newPost": "New Post",
+    "prev": "Prev",
+    "next": "Next",
+    "more": "+{count} more"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Overview of your social media activity",
+    "recentPosts": "Recent Posts",
+    "scheduled": "Scheduled",
+    "published": "Published",
+    "failed": "Failed",
+    "draft": "Drafts",
+    "noPosts": "No posts yet. Create your first post!"
+  },
+  "posts": {
+    "title": "Posts",
+    "description": "Manage all your social media posts",
+    "all": "All",
+    "noPosts": "No posts found.",
+    "confirmDelete": "Delete this post?",
+    "confirmBulkDelete": "Delete {count} posts?",
+    "confirmBulkPublish": "Publish {count} posts?"
+  },
+  "newPost": {
+    "title": "New Post",
+    "description": "Create and publish to your connected platforms",
+    "content": "Content",
+    "placeholder": "What's on your mind?",
+    "media": "Media (optional)",
+    "uploading": "Uploading...",
+    "platforms": "Platforms",
+    "noAccounts": "No accounts connected.",
+    "connectOne": "Connect one",
+    "schedule": "Schedule (optional)",
+    "publishNow": "Publish Now",
+    "scheduleSend": "Schedule",
+    "saveDraft": "Save Draft"
+  },
+  "editPost": {
+    "title": "Edit Post",
+    "confirmDelete": "Delete this post?"
+  },
+  "drafts": {
+    "title": "Drafts",
+    "description": "Posts saved for later",
+    "noDrafts": "No drafts yet."
+  },
+  "calendar": {
+    "title": "Calendar",
+    "description": "Content schedule overview",
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun"
+    ]
+  },
+  "analytics": {
+    "title": "Analytics",
+    "description": "Track your social media performance",
+    "days7": "7 days",
+    "days30": "30 days",
+    "days90": "90 days",
+    "engagement": "Engagement by Platform",
+    "breakdown": "Platform Breakdown",
+    "likes": "Likes",
+    "comments": "Comments",
+    "shares": "Shares",
+    "impressions": "Impressions"
+  },
+  "accounts": {
+    "title": "Accounts",
+    "description": "Manage your connected social media accounts",
+    "connect": "Connect a Platform",
+    "connected": "Connected Accounts",
+    "noAccounts": "No accounts connected yet.",
+    "disconnect": "Disconnect",
+    "confirmDisconnect": "Disconnect this account?",
+    "connectedAt": "Connected",
+    "tokenExpires": "Token expires",
+    "discordInfo": "Discord uses a Bot Token. Set DISCORD_BOT_TOKEN and DISCORD_WEBHOOK_URL in your .env file.",
+    "discordGuideTitle": "Connect Discord",
+    "discordGuideDesc": "Discord doesn't use OAuth. You need to connect via Bot Token. Add the following to your .env file in the project root:",
+    "discordGuidePath": "File location: project-root/.env",
+    "discordGuideOk": "Got it",
+    "connecting": "Connecting {platform}",
+    "linkedPosts": "{count} linked posts",
+    "disconnectBlocked": "Disconnect blocked: {count} posts still use this account",
+    "discordConnect": "Connect Discord",
+    "connectingDiscord": "Connecting...",
+    "status": {
+      "active": "Active",
+      "expiringSoon": "Expiring soon",
+      "expired": "Expired",
+      "misconfigured": "Needs config",
+      "error": "Attention"
+    }
+  },
+  "platform": {
+    "linkedin": "",
+    "twitter": "",
+    "facebook": "",
+    "discord": "",
+    "reddit": "",
+    "youtube": ""
+  },
+  "toast": {
+    "postPublished": "Post published",
+    "postScheduled": "Post scheduled",
+    "postSaved": "Post saved",
+    "postDeleted": "Post deleted",
+    "draftSaved": "Draft saved",
+    "draftDeleted": "Draft deleted",
+    "failedToPublish": "Failed to publish",
+    "failedToSave": "Failed to save",
+    "failedToDelete": "Failed to delete",
+    "failedToCreate": "Failed to create post",
+    "failedToUpload": "Failed to upload {name}",
+    "somethingWrong": "Something went wrong",
+    "bulkDeleted": "Deleted {count} posts",
+    "bulkDeleteFailed": "Bulk delete failed",
+    "bulkPublished": "{count} posts queued for publishing",
+    "bulkPublishFailed": "Bulk publish failed",
+    "accountDisconnected": "Account disconnected",
+    "failedToDisconnect": "Failed to disconnect",
+    "contentGenerated": "Content generated",
+    "failedToConnect": "Failed to connect account",
+    "accountConnected": "{platform} account connected"
+  },
+  "status": {
+    "draft": "Draft",
+    "scheduled": "Scheduled",
+    "publishing": "Publishing",
+    "published": "Published",
+    "failed": "Failed"
+  }
+}

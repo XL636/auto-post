@@ -1,5 +1,5 @@
 import { prisma } from "@/shared/lib/prisma";
-import { getPlatformClient } from "@/modules/platforms";
+import { getAuthorizedPlatformClient } from "@/modules/accounts/account.service";
 
 export async function syncAllAnalytics(): Promise<void> {
   const published = await prisma.postPlatform.findMany({
@@ -9,7 +9,7 @@ export async function syncAllAnalytics(): Promise<void> {
 
   for (const pp of published) {
     try {
-      const client = getPlatformClient(pp.account.platform, pp.account);
+      const { client } = await getAuthorizedPlatformClient(pp.account);
       const data = await client.getAnalytics(pp.platformPostId!);
       await prisma.analytics.create({
         data: { postPlatformId: pp.id, ...data },
