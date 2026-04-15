@@ -4,9 +4,6 @@ import type { TokenPair } from "@/shared/types";
 const AUTHORIZE_URL = "https://twitter.com/i/oauth2/authorize";
 const TOKEN_URL = "https://api.twitter.com/2/oauth2/token";
 const TWITTER_SCOPES = ["tweet.read", "tweet.write", "users.read", "offline.access"];
-const PKCE_TTL_MS = 10 * 60 * 1000;
-
-const pkceStore = new Map<string, { codeVerifier: string; expiresAt: number }>();
 
 function toBase64Url(buffer: Buffer): string {
   return buffer
@@ -26,36 +23,6 @@ function createCodeChallenge(codeVerifier: string): string {
 
 function createState(): string {
   return toBase64Url(randomBytes(24));
-}
-
-function storeCodeVerifier(redirectUri: string, codeVerifier: string): void {
-  const now = Date.now();
-
-  for (const [key, value] of pkceStore.entries()) {
-    if (value.expiresAt <= now) {
-      pkceStore.delete(key);
-    }
-  }
-
-  pkceStore.set(redirectUri, {
-    codeVerifier,
-    expiresAt: now + PKCE_TTL_MS,
-  });
-}
-
-function takeStoredCodeVerifier(redirectUri: string): string | undefined {
-  const entry = pkceStore.get(redirectUri);
-  if (!entry) {
-    return undefined;
-  }
-
-  pkceStore.delete(redirectUri);
-
-  if (entry.expiresAt <= Date.now()) {
-    return undefined;
-  }
-
-  return entry.codeVerifier;
 }
 
 function getTwitterClientAuthHeader(clientId: string, clientSecret: string): string {
@@ -88,8 +55,6 @@ export function createTwitterAuthRequest(redirectUri: string, clientId: string):
   const codeChallenge = createCodeChallenge(codeVerifier);
   const state = createState();
 
-  storeCodeVerifier(redirectUri, codeVerifier);
-
   const params = new URLSearchParams({
     response_type: "code",
     client_id: clientId,
@@ -118,7 +83,7 @@ export async function handleTwitterCallback(
   clientSecret: string,
   codeVerifier?: string,
 ): Promise<TokenPair> {
-  const resolvedCodeVerifier = codeVerifier ?? takeStoredCodeVerifier(redirectUri);
+  const resolvedCodeVerifier = codeVerifier;
 
   if (!resolvedCodeVerifier) {
     throw new Error("Twitter OAuth error: missing PKCE verifier. Start the connection again.");

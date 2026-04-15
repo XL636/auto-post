@@ -151,7 +151,7 @@
     "discordGuideDesc": "先在平台凭证页面保存 Discord Bot Token 和 Webhook URL，再回来一键连接。",
     "discordGuidePath": "文件位置：侧边栏 -> 平台凭证",
     "discordGuideOk": "知道了",
-    "connecting": "正在连接 {platform}",
+    "connecting": "连接中...",
     "linkedPosts": "已关联 {count} 条帖子",
     "disconnectBlocked": "无法断开：还有 {count} 条帖子正在使用该账号",
     "discordConnect": "连接 Discord",
@@ -181,7 +181,10 @@
     "showError": "展开错误详情",
     "hideError": "收起错误详情",
     "disconnectTooltip": "无法断开：有 {count} 条帖子正在使用这个账号，请先删除或改绑。",
-    "disconnectDialogTitle": "断开账号"
+    "disconnectDialogTitle": "断开账号",
+    "selectFacebookPage": "选择 Facebook 页面",
+    "selectFacebookPageDesc": "选择要连接的 Facebook 页面，帖子将发布到该页面",
+    "noFacebookPages": "未找到您管理的 Facebook 页面。请确保您的 Facebook 账号管理了至少一个页面。"
   },
   "platform": {
     "linkedin": "领英",
@@ -213,7 +216,8 @@
     "contentGenerated": "内容已生成",
     "failedToConnect": "连接账号失败",
     "accountConnected": "{platform} 账号已连接",
-    "credentialsSaved": "{platform} 凭证已保存"
+    "credentialsSaved": "{platform} 凭证已保存",
+    "authDenied": "{platform} 授权被拒绝"
   },
   "status": {
     "draft": "草稿",

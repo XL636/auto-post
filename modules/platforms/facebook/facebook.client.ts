@@ -1,7 +1,11 @@
 import type { Account } from "@prisma/client";
 import type { PlatformClient } from "../platform.interface";
 import type { PublishResult, AnalyticsData, UserProfile, TokenPair } from "@/shared/types";
-import { getFacebookAuthUrl, handleFacebookCallback } from "./facebook.auth";
+import {
+  exchangeLongLivedToken,
+  getFacebookAuthUrl,
+  handleFacebookCallback,
+} from "./facebook.auth";
 import { registerPlatform } from "../registry";
 import { toErrorMessage } from "@/shared/lib/error";
 import { facebookConfig } from "./facebook.config";
@@ -28,14 +32,25 @@ export class FacebookClient implements PlatformClient {
   }
 
   async refreshToken(): Promise<TokenPair> {
+    if (this.account.tokenType === "page") {
+      return {
+        accessToken: this.account.accessToken,
+        expiresAt: undefined,
+        scopes: this.account.scopes,
+        tokenType: this.account.tokenType || "page",
+      };
+    }
+
     const credentials = await requirePlatformCredential("FACEBOOK", this.account.userId);
-    const res = await fetch(
-      `${GRAPH_API}/oauth/access_token?grant_type=fb_exchange_token&client_id=${credentials.clientId}&client_secret=${credentials.clientSecret}&fb_exchange_token=${this.account.accessToken}`,
+    const tokens = await exchangeLongLivedToken(
+      this.account.accessToken,
+      credentials.clientId || "",
+      credentials.clientSecret || "",
     );
-    const data = await res.json();
+
     return {
-      accessToken: data.access_token,
-      expiresAt: new Date(Date.now() + (data.expires_in || 5184000) * 1000),
+      accessToken: tokens.accessToken,
+      expiresAt: new Date(Date.now() + tokens.expiresIn * 1000),
       scopes: this.account.scopes,
       tokenType: "long-lived",
     };
@@ -86,8 +101,32 @@ export class FacebookClient implements PlatformClient {
   }
 
   async getUserProfile(): Promise<UserProfile> {
-    const res = await fetch(`${GRAPH_API}/me?fields=id,name,picture&access_token=${this.account.accessToken}`);
+    if (this.account.tokenType === "page") {
+      const res = await fetch(
+        `${GRAPH_API}/${this.account.platformUserId}?fields=id,name,picture&access_token=${this.account.accessToken}`,
+      );
+      const data = await res.json();
+
+      if (data.error) {
+        throw new Error(`Facebook error: ${data.error.message}`);
+      }
+
+      return {
+        platformUserId: data.id,
+        displayName: data.name,
+        avatarUrl: data.picture?.data?.url,
+      };
+    }
+
+    const res = await fetch(
+      `${GRAPH_API}/me?fields=id,name,picture&access_token=${this.account.accessToken}`,
+    );
     const data = await res.json();
+
+    if (data.error) {
+      throw new Error(`Facebook error: ${data.error.message}`);
+    }
+
     return {
       platformUserId: data.id,
       displayName: data.name,

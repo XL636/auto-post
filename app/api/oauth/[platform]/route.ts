@@ -54,6 +54,22 @@ export async function GET(
     );
   }
 
+  if (platformKey === "TWITTER") {
+    const twitterUrl = new URL("/api/oauth/twitter", process.env.NEXT_PUBLIC_APP_URL);
+    if (locale) {
+      twitterUrl.searchParams.set("locale", locale);
+    }
+    return NextResponse.redirect(twitterUrl);
+  }
+
+  if (platformKey === "FACEBOOK") {
+    const facebookUrl = new URL("/api/oauth/facebook", process.env.NEXT_PUBLIC_APP_URL);
+    if (locale) {
+      facebookUrl.searchParams.set("locale", locale);
+    }
+    return NextResponse.redirect(facebookUrl);
+  }
+
   let url: string;
 
   try {

@@ -45,6 +45,14 @@
 - [x] 平台级内容/媒体发布校验 + 前端错误回显
 - [x] Next.js `middleware` → `proxy` 迁移
 
+## v1.1.3 — OAuth 连接修复 ✅
+- [x] Twitter/X 清理遗留 PKCE 内存状态
+- [x] 通用 OAuth 路由改为对 Twitter / Facebook 早返回到专属入口
+- [x] Facebook OAuth 改为 Page 授权与 Page token 存储
+- [x] Facebook 多 Page 选择页与 API
+- [x] Facebook Page 模式资料读取 / refresh 适配
+- [x] 账号页 Facebook OAuth 错误提示与翻译补齐
+
 ## v1.2 — Tier-3 平台 + 多用户
 - [ ] Instagram 集成（Business 账号 + 异步两步发布）
 - [ ] TikTok 集成（需 App 审核）

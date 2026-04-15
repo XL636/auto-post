@@ -151,7 +151,7 @@
     "discordGuideDesc": "Save the Discord Bot Token and Webhook URL on the Credentials page first, then come back to connect in one click.",
     "discordGuidePath": "Location: sidebar -> Credentials",
     "discordGuideOk": "Got it",
-    "connecting": "Connecting {platform}",
+    "connecting": "Connecting...",
     "linkedPosts": "{count} linked posts",
     "disconnectBlocked": "Disconnect blocked: {count} posts still use this account",
     "discordConnect": "Connect Discord",
@@ -181,7 +181,10 @@
     "showError": "Show error details",
     "hideError": "Hide error details",
     "disconnectTooltip": "Cannot disconnect: {count} posts use this account. Delete or reassign them first.",
-    "disconnectDialogTitle": "Disconnect account"
+    "disconnectDialogTitle": "Disconnect account",
+    "selectFacebookPage": "Select Facebook Page",
+    "selectFacebookPageDesc": "Choose the Facebook Page you want to connect. Posts will be published to this page.",
+    "noFacebookPages": "No Facebook Pages found. Make sure your Facebook account manages at least one Page."
   },
   "platform": {
     "linkedin": "",
@@ -213,7 +216,8 @@
     "contentGenerated": "Content generated",
     "failedToConnect": "Failed to connect account",
     "accountConnected": "{platform} account connected",
-    "credentialsSaved": "{platform} credentials saved"
+    "credentialsSaved": "{platform} credentials saved",
+    "authDenied": "{platform} authorization was denied"
   },
   "status": {
     "draft": "Draft",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -84,6 +84,24 @@ export default function AccountsPage() {
   const tp = useTranslations("platform");
   const tc = useTranslations("common");
   const tt = useTranslations("toast");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
+
+    if (error === "facebook_no_pages") {
+      toast.error(t("noFacebookPages"));
+    } else if (error === "facebook_denied") {
+      toast.error(tt("authDenied", { platform: "Facebook" }));
+    } else {
+      return;
+    }
+
+    params.delete("error");
+    const nextSearch = params.toString();
+    const nextUrl = nextSearch ? `${window.location.pathname}?${nextSearch}` : window.location.pathname;
+    window.history.replaceState({}, "", nextUrl);
+  }, [t, tt]);
 
   const connectedCountByPlatform = useMemo(() => {
     return accounts.reduce<Record<string, number>>((counts, account) => {

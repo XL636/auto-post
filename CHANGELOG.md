@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.5] - 2026-04-15
+
+### Added — OAuth 连接修复
+- 新增 Facebook 专属 OAuth 入口、回调和 Page 选择 API
+- 新增 Facebook Page 选择页面，支持用户在授权后选择要绑定的 Page
+- 新增 Facebook Page 列表获取、长效 user token 交换能力
+
+### Changed
+- Twitter/X OAuth 清理遗留 PKCE 内存 store，统一只通过 cookie 传递 verifier
+- 通用 OAuth 路由对 Twitter / Facebook 改为早返回到专属路由，避免错误的 `state` 处理
+- Facebook 账号模型改为保存 Page ID + Page access token，发布流程正式对齐 Facebook Pages API
+- Facebook client 的 `getUserProfile` / `refreshToken` 适配 Page token 模式
+- 账号页新增 Facebook OAuth 失败场景 toast 处理，并补齐中英文翻译文案
+
+### Fixed
+- 修复 Twitter 误走通用 OAuth 路由时可能出现重复 `state` 参数的问题
+- 修复 Facebook OAuth 后保存的是 user token / user id，导致无法向 Page 发帖的问题
+- 修复 Facebook 缺少 Page 选择流程，多个 Page 账号无法完成连接的问题
+
 ## [0.2.4] - 2026-04-13
 
 ### Added — Phase 7: UX 优化

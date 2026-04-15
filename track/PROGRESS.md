@@ -1,5 +1,19 @@
 # Progress
 
+## Hotfix: OAuth 连接修复
+
+| Task | 状态 | 完成日期 |
+|------|------|---------|
+| Twitter/X 遗留 PKCE 内存 store 清理 | ✅ 完成 | 2026-04-15 |
+| 通用 OAuth 路由增加 Twitter / Facebook 专属重定向 | ✅ 完成 | 2026-04-15 |
+| Facebook OAuth 改为 Page 授权链路 | ✅ 完成 | 2026-04-15 |
+| Facebook Page 选择 API + 页面 | ✅ 完成 | 2026-04-15 |
+| Facebook Page token 资料读取 / refresh 适配 | ✅ 完成 | 2026-04-15 |
+| 账号页 Facebook 错误 toast + 中英文文案补齐 | ✅ 完成 | 2026-04-15 |
+| Build / Lint / Test 验证通过 | ✅ 完成 | 2026-04-15 |
+
+**Hotfix 总进度**: 7 / 7 (100%)
+
 ## Phase 1: v1.0 Core
 
 | Task | 状态 | 完成日期 |

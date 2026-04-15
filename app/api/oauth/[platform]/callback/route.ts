@@ -64,6 +64,11 @@ export async function GET(
 ) {
   const { platform } = await params;
   const platformKey = platform.toUpperCase() as Platform;
+
+  if (platformKey === "FACEBOOK") {
+    return NextResponse.json({ error: "Facebook uses dedicated callback route" }, { status: 400 });
+  }
+
   const { searchParams } = req.nextUrl;
   const code = searchParams.get("code");
   const state = searchParams.get("state");
