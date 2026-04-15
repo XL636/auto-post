@@ -92,10 +92,34 @@ export class DiscordClient implements PlatformClient {
   }
 
   async getUserProfile(): Promise<UserProfile> {
-    return {
-      platformUserId: "discord-bot",
-      displayName: "Discord Bot",
-    };
+    const credentials = await requirePlatformCredential("DISCORD", this.account.userId);
+    if (!credentials.botToken) {
+      return { platformUserId: "discord-bot", displayName: "Discord Bot" };
+    }
+
+    try {
+      const res = await fetch("https://discord.com/api/v10/users/@me", {
+        headers: { Authorization: `Bot ${credentials.botToken}` },
+      });
+
+      if (!res.ok) {
+        return { platformUserId: "discord-bot", displayName: "Discord Bot" };
+      }
+
+      const data = await res.json();
+      const avatarHash = data.avatar;
+      const avatarUrl = avatarHash
+        ? `https://cdn.discordapp.com/avatars/${data.id}/${avatarHash}.png`
+        : undefined;
+
+      return {
+        platformUserId: data.id || "discord-bot",
+        displayName: data.username || "Discord Bot",
+        avatarUrl,
+      };
+    } catch {
+      return { platformUserId: "discord-bot", displayName: "Discord Bot" };
+    }
   }
 }
 

@@ -53,6 +53,15 @@
 - [x] Facebook Page 模式资料读取 / refresh 适配
 - [x] 账号页 Facebook OAuth 错误提示与翻译补齐
 
+## v1.1.4 — 其余平台连接/发布修复 ✅
+- [x] LinkedIn 发帖切换到 Community Management `/rest/posts`
+- [x] LinkedIn 删除与 analytics 兼容新版 post ID
+- [x] Reddit 发帖支持 `[r/subreddit]` 目标语法
+- [x] Reddit refresh token 错误检查补齐
+- [x] YouTube 改为视频上传链路并显式禁止纯文本发布
+- [x] 发布守卫放开 YouTube 媒体上传
+- [x] Discord 账号信息改为读取真实 Bot 用户资料
+
 ## v1.2 — Tier-3 平台 + 多用户
 - [ ] Instagram 集成（Business 账号 + 异步两步发布）
 - [ ] TikTok 集成（需 App 审核）

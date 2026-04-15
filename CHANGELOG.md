@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.6] - 2026-04-15
+
+### Added — 其余平台连接/发布修复
+- 新增 YouTube resumable video upload 发布链路与处理状态轮询能力
+- 新增 Reddit `[r/subreddit]` 内容语法，用于在正文中指定目标 subreddit
+
+### Changed
+- LinkedIn 发帖从旧版 `ugcPosts` 切换到 `https://api.linkedin.com/rest/posts`
+- LinkedIn 删除接口切换到新版 `/rest/posts/{id}`，并保持 analytics 查询兼容新版 post ID
+- YouTube 平台能力声明改为“必须带视频、不可纯文本”
+- 发布前媒体校验放开 YouTube，不再把它视为“媒体未实现平台”
+- Discord 账号连接与资料拉取改为优先读取真实 Bot ID、用户名和头像
+
+### Fixed
+- 修复 LinkedIn 新应用可能因旧版 UGC Posts API 被限制而发帖失败的问题
+- 修复 Reddit 发帖只能硬编码发到用户 profile、不能投递 subreddit 的问题
+- 修复 Reddit refresh token 接口在失败时静默写入无效 token 的问题
+- 修复 YouTube 继续调用已废弃 bulletin API 导致文本发布 100% 失败的问题
+- 修复 Discord 连接后账号信息总是显示固定占位 Bot 的问题
+
 ## [0.2.5] - 2026-04-15
 
 ### Added — OAuth 连接修复

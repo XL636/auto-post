@@ -5,6 +5,6 @@ export const youtubeConfig: PlatformConfig = {
   maxChars: 5000,
   maxImages: 0,
   maxVideos: 1,
-  supportsTextOnly: true,
-  requiresMedia: false,
+  supportsTextOnly: false,
+  requiresMedia: true,
 };

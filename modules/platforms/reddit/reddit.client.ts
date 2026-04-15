@@ -42,6 +42,24 @@ export class RedditClient implements PlatformClient {
 
   async publish(content: string): Promise<PublishResult> {
     try {
+      let subreddit = "u_" + this.account.displayName;
+      let title: string;
+      let text: string;
+
+      const lines = content.split("\n");
+      const subredditMatch = lines[0]?.match(/^\[r\/([^\]]+)\]\s*/);
+
+      if (subredditMatch) {
+        subreddit = subredditMatch[1];
+        const remaining = lines.slice(1).join("\n").trim();
+        const contentLines = remaining.split("\n");
+        title = (contentLines[0] || content.substring(0, 300)).substring(0, 300);
+        text = contentLines.length > 1 ? contentLines.slice(1).join("\n").trim() : "";
+      } else {
+        title = (lines[0] || content.substring(0, 300)).substring(0, 300);
+        text = lines.length > 1 ? lines.slice(1).join("\n").trim() : "";
+      }
+
       const res = await fetch(`${API_BASE}/api/submit`, {
         method: "POST",
         headers: {
@@ -51,9 +69,9 @@ export class RedditClient implements PlatformClient {
         },
         body: new URLSearchParams({
           kind: "self",
-          sr: "u_" + this.account.displayName,
-          title: content.substring(0, 300),
-          text: content,
+          sr: subreddit,
+          title,
+          text,
         }),
       });
       const data = await res.json();

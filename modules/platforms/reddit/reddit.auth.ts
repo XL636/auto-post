@@ -73,6 +73,9 @@ export async function refreshRedditAccessToken(
     }),
   });
   const data = await res.json();
+  if (data.error) {
+    throw new Error(`Reddit token refresh error: ${data.error}`);
+  }
   return {
     accessToken: data.access_token,
     refreshToken: data.refresh_token || refreshToken,

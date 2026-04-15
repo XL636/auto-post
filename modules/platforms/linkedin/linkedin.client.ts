@@ -61,39 +61,57 @@ export class LinkedInClient implements PlatformClient {
     try {
       const body = {
         author: `urn:li:person:${this.account.platformUserId}`,
-        lifecycleState: "PUBLISHED",
-        specificContent: {
-          "com.linkedin.ugc.ShareContent": {
-            shareCommentary: { text: content },
-            shareMediaCategory: "NONE",
-          },
+        commentary: content,
+        visibility: "PUBLIC",
+        distribution: {
+          feedDistribution: "MAIN_FEED",
+          targetEntities: [],
+          thirdPartyDistributionChannels: [],
         },
-        visibility: { "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC" },
+        lifecycleState: "PUBLISHED",
       };
-      const res = await fetch(`${API_BASE}/ugcPosts`, {
+      const res = await fetch("https://api.linkedin.com/rest/posts", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${this.account.accessToken}`,
           "Content-Type": "application/json",
+          "LinkedIn-Version": "202401",
           "X-Restli-Protocol-Version": "2.0.0",
         },
         body: JSON.stringify(body),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.message || "LinkedIn publish failed" };
+
+      if (res.status === 201) {
+        const postId = res.headers.get("x-restli-id");
+        return { success: true, platformPostId: postId || undefined };
       }
-      return { success: true, platformPostId: data.id };
+
+      const data = await res.json().catch(() => null);
+      const errorMessage =
+        (data as { message?: string })?.message || `LinkedIn publish failed (${res.status})`;
+      return { success: false, error: errorMessage };
     } catch (error) {
       return { success: false, error: toErrorMessage(error, "Publish failed") };
     }
   }
 
   async deletePost(platformPostId: string): Promise<void> {
-    await fetch(`${API_BASE}/ugcPosts/${platformPostId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${this.account.accessToken}` },
-    });
+    const res = await fetch(
+      `https://api.linkedin.com/rest/posts/${encodeURIComponent(platformPostId)}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${this.account.accessToken}`,
+          "LinkedIn-Version": "202401",
+          "X-Restli-Protocol-Version": "2.0.0",
+        },
+      },
+    );
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new Error((data as { message?: string })?.message || "LinkedIn delete failed");
+    }
   }
 
   async getAnalytics(platformPostId: string): Promise<AnalyticsData> {

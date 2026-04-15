@@ -11,7 +11,6 @@ const MEDIA_NOT_IMPLEMENTED_PLATFORMS = new Set([
   "DISCORD",
   "REDDIT",
   "TWITTER",
-  "YOUTUBE",
 ]);
 
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp"];

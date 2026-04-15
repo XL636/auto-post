@@ -9,6 +9,14 @@ import { requirePlatformCredential } from "@/modules/platform-credentials/creden
 
 const API_BASE = "https://www.googleapis.com/youtube/v3";
 
+function resolveMediaUrl(url: string): string {
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+
+  return new URL(url, process.env.NEXT_PUBLIC_APP_URL).toString();
+}
+
 export class YouTubeClient implements PlatformClient {
   constructor(private account: Account) {}
 
@@ -40,26 +48,119 @@ export class YouTubeClient implements PlatformClient {
     );
   }
 
-  async publish(content: string): Promise<PublishResult> {
+  async publish(content: string, mediaUrls: string[] = []): Promise<PublishResult> {
+    if (mediaUrls.length === 0) {
+      return {
+        success: false,
+        error: "YouTube requires a video file to publish. Text-only posts are not supported by the YouTube API.",
+      };
+    }
+
     try {
-      const res = await fetch(`${API_BASE}/activities?part=snippet,contentDetails`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.account.accessToken}`,
-          "Content-Type": "application/json",
+      const videoUrl = resolveMediaUrl(mediaUrls[0]);
+      const metadata = {
+        snippet: {
+          title: content.substring(0, 100) || "Untitled",
+          description: content,
+          categoryId: "22",
         },
-        body: JSON.stringify({
-          snippet: { description: content },
-          contentDetails: { bulletin: { resourceId: {} } },
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error?.message || "YouTube publish failed" };
+        status: {
+          privacyStatus: "public",
+          selfDeclaredMadeForKids: false,
+        },
+      };
+
+      const initRes = await fetch(
+        "https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${this.account.accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(metadata),
+        },
+      );
+
+      if (!initRes.ok) {
+        const errData = await initRes.json().catch(() => null);
+        return {
+          success: false,
+          error:
+            (errData as { error?: { message?: string } })?.error?.message ||
+            `YouTube upload init failed (${initRes.status})`,
+        };
       }
-      return { success: true, platformPostId: data.id };
+
+      const uploadUrl = initRes.headers.get("location");
+      if (!uploadUrl) {
+        return { success: false, error: "YouTube did not return an upload URL" };
+      }
+
+      const videoRes = await fetch(videoUrl);
+      if (!videoRes.ok) {
+        return { success: false, error: `Failed to fetch video from: ${videoUrl}` };
+      }
+
+      const videoBuffer = await videoRes.arrayBuffer();
+      const contentType = videoRes.headers.get("content-type") || "video/mp4";
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": contentType,
+          "Content-Length": String(videoBuffer.byteLength),
+        },
+        body: videoBuffer,
+      });
+      const uploadData = await uploadRes.json().catch(() => null);
+
+      if (!uploadRes.ok) {
+        return {
+          success: false,
+          error:
+            (uploadData as { error?: { message?: string } })?.error?.message ||
+            "YouTube video upload failed",
+        };
+      }
+
+      return { success: true, platformPostId: (uploadData as { id?: string })?.id };
     } catch (error) {
-      return { success: false, error: toErrorMessage(error, "Publish failed") };
+      return { success: false, error: toErrorMessage(error, "YouTube publish failed") };
+    }
+  }
+
+  async pollPublishStatus(videoId: string): Promise<PublishResult> {
+    try {
+      const res = await fetch(`${API_BASE}/videos?part=status,processingDetails&id=${videoId}`, {
+        headers: { Authorization: `Bearer ${this.account.accessToken}` },
+      });
+
+      if (!res.ok) {
+        return { success: false, error: "Failed to check video status" };
+      }
+
+      const data = await res.json();
+      const video = data.items?.[0];
+
+      if (!video) {
+        return { success: false, error: "Video not found" };
+      }
+
+      const processingStatus = video.processingDetails?.processingStatus;
+      const uploadStatus = video.status?.uploadStatus;
+
+      if (uploadStatus === "processed" || processingStatus === "succeeded") {
+        return { success: true, platformPostId: videoId };
+      }
+
+      if (uploadStatus === "failed" || processingStatus === "failed") {
+        const reason = video.processingDetails?.processingFailureReason || "Processing failed";
+        return { success: false, error: `YouTube processing failed: ${reason}` };
+      }
+
+      return { success: false, error: "processing" };
+    } catch (error) {
+      return { success: false, error: toErrorMessage(error, "Failed to poll YouTube status") };
     }
   }
 

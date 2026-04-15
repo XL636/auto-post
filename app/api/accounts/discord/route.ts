@@ -21,32 +21,64 @@ export async function POST() {
     ? encrypt(credentials.botToken || "", encryptionKey)
     : credentials.botToken || "";
 
+  let displayName = "Discord Bot";
+  let botUserId = "discord-bot";
+  let avatarUrl: string | null = null;
+
+  try {
+    const res = await fetch("https://discord.com/api/v10/users/@me", {
+      headers: { Authorization: `Bot ${credentials.botToken}` },
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      displayName = data.username || "Discord Bot";
+      botUserId = data.id || "discord-bot";
+
+      if (data.avatar) {
+        avatarUrl = `https://cdn.discordapp.com/avatars/${data.id}/${data.avatar}.png`;
+      }
+    }
+  } catch {
+    // Best-effort profile lookup only.
+  }
+
+  if (botUserId !== "discord-bot") {
+    await prisma.account.deleteMany({
+      where: {
+        userId: getDefaultUserId(),
+        platform: "DISCORD",
+        platformUserId: "discord-bot",
+      },
+    });
+  }
+
   const account = await prisma.account.upsert({
     where: {
       userId_platform_platformUserId: {
         userId: getDefaultUserId(),
         platform: "DISCORD",
-        platformUserId: "discord-bot",
+        platformUserId: botUserId,
       },
     },
     update: {
       accessToken,
       tokenType: "bot",
       scopes: ["bot", "webhook"],
-      displayName: "Discord Bot",
-      avatarUrl: null,
+      displayName,
+      avatarUrl,
       lastError: null,
       lastValidatedAt: new Date(),
     },
     create: {
       userId: getDefaultUserId(),
       platform: "DISCORD",
-      platformUserId: "discord-bot",
+      platformUserId: botUserId,
       accessToken,
       tokenType: "bot",
       scopes: ["bot", "webhook"],
-      displayName: "Discord Bot",
-      avatarUrl: null,
+      displayName,
+      avatarUrl,
       lastError: null,
       lastValidatedAt: new Date(),
     },
